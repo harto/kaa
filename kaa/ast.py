@@ -4,19 +4,17 @@ import builtins
 class Expr(object):
 
     def eval(self, env):
-        raise Exception('not implemented')
+        return self
 
 
-# class Func(Expr):
-#
-#     def __init__(self, fn):
-#         self.fn = fn
-#
-#     def eval(self, env):
-#         return self
-#
-#     def __call__(self, args):
-#         return self.fn(*args)
+class Func(Expr):
+
+    def __init__(self, fn):
+        self.fn = fn
+
+    def __call__(self, *args):
+        result = self.fn(*args)
+        return result
 
 
 class List(Expr):
@@ -52,5 +50,8 @@ class Value(Expr):
     def __init__(self, value):
         self.value = value
 
-    def eval(self, env):
+    def get(self):
         return self.value
+
+    def __str__(self):
+        return str(self.value)

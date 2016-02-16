@@ -8,6 +8,10 @@ class Runtime(object):
         self.evaluator = Evaluator()
         self.env = builtins.env()
 
+    def eval_file(self, f):
+        # todo: don't slurp entire file
+        return self.eval_string(f.read())
+
     def eval_string(self, s):
         result = None
         for form in reader.read(s):
