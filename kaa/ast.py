@@ -1,6 +1,3 @@
-import builtins
-
-
 class Expr(object):
 
     def eval(self, env):
@@ -27,7 +24,7 @@ class List(Expr):
 
     def eval(self, env):
         if not self.members:
-            return []
+            return self
         fn = self.members[0].eval(env)
         args = [expr.eval(env) for expr in self.members[1:]]
         return fn(*args)
@@ -42,7 +39,12 @@ class Symbol(Expr):
         try:
             return env[self.name]
         except KeyError:
-            raise Exception('undefined symbol: %s' % self.name)
+            raise UnboundSymbolException(self.name)
+
+class UnboundSymbolException(Exception):
+
+    def __init__(self, symbol_name):
+        Exception.__init__(self, 'undefined symbol: %s' % symbol_name)
 
 
 class Value(Expr):
