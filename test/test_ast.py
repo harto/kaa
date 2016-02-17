@@ -27,3 +27,13 @@ class SymbolTest(TestCase):
         s = ast.Symbol('foo')
         self.assertRaises(ast.UnboundSymbolException,
                           lambda: s.eval({}))
+
+    def test_equality(self):
+        self.assertEqual(ast.Symbol('foo'), ast.Symbol('foo'))
+        self.assertNotEqual(ast.Symbol('bar'), ast.Symbol('foo'))
+
+class ValueTest(TestCase):
+
+    def test_equality(self):
+        self.assertEqual(ast.Value(42), ast.Value(42))
+        self.assertNotEqual(ast.Value(42.0), ast.Value(42))

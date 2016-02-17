@@ -19,14 +19,17 @@ class List(Expr):
     def __init__(self, members = None):
         self.members = members or []
 
+    def __getitem__(self, i):
+        return self.members[i]
+
     def append(self, x):
         self.members.append(x)
 
     def eval(self, env):
         if not self.members:
             return self
-        fn = self.members[0].eval(env)
-        args = [expr.eval(env) for expr in self.members[1:]]
+        fn = self[0].eval(env)
+        args = [expr.eval(env) for expr in self[1:]]
         return fn(*args)
 
 
@@ -34,6 +37,10 @@ class Symbol(Expr):
 
     def __init__(self, name):
         self.name = name
+
+    def __eq__(self, other):
+        return type(other) == type(self) \
+            and other.name == self.name
 
     def eval(self, env):
         try:
@@ -54,6 +61,10 @@ class Value(Expr):
 
     def get(self):
         return self.value
+
+    def __eq__(self, other):
+        return type(other) == type(self) \
+            and other.value == self.value
 
     def __str__(self):
         return str(self.value)

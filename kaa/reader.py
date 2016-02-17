@@ -24,10 +24,13 @@ class CharStream(object):
         return c
 
     def unpop(self, _):
-        self.col -= 1
-        if self.col < 0:
+        if self.col - 1 < 0:
             raise Exception('unpopped too hard')
+        self.col -= 1
 
+
+class UnexpectedEofException(Exception): pass
+class UnbalancedDelimiterException(Exception): pass
 
 class Reader(object):
 
@@ -40,31 +43,24 @@ class Reader(object):
         self.list_depth = 0
 
     def read(self, chars):
-
         while True:
-
             if chars.eof():
                 if self.list_depth > 0:
-                    raise Exception('unexpected end of input')
+                    raise UnexpectedEofException()
                 break
-
             c = chars.pop()
-
             if c.isspace():
                 while chars.peek() and chars.peek().isspace():
                     chars.pop()
                 continue
-
             elif c == '(':
                 yield self.read_list(chars)
-
             elif c == ')':
                 if self.list_depth == 0:
-                    raise Exception('unexpected closing parenthesis')
+                    raise UnbalancedDelimiterException(c)
                 else:
                     yield self.EOLIST
                     break
-
             else:
                 chars.unpop(c)
                 yield self.read_atom(chars)
@@ -81,7 +77,7 @@ class Reader(object):
 
     def read_atom(self, chars):
         token = ''
-        while self.ATOM.match(chars.peek()):
+        while chars.peek() and self.ATOM.match(chars.peek()):
             token += chars.pop()
         if self.INTEGER.match(token):
             return Value(int(token))
