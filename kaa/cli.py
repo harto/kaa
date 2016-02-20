@@ -24,7 +24,11 @@ if __name__ == '__main__':
     elif args.paths:
         for path in args.paths:
             with open(path) as f:
-                runtime.eval_file(f)
+                runtime.eval_lines(f)
+
+    elif sys.stdin.isatty():
+        from repl import Repl
+        Repl(runtime).loop()
 
     else:
-        print('todo: read forms from stdin or boot repl')
+        runtime.eval_lines(sys.stdin)

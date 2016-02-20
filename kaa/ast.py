@@ -3,7 +3,6 @@ class Expr(object):
     def eval(self, env):
         return self
 
-
 class Func(Expr):
 
     def __init__(self, fn):
@@ -12,7 +11,6 @@ class Func(Expr):
     def __call__(self, *args):
         result = self.fn(*args)
         return result
-
 
 class List(Expr):
 
@@ -31,7 +29,6 @@ class List(Expr):
         fn = self[0].eval(env)
         args = [expr.eval(env) for expr in self[1:]]
         return fn(*args)
-
 
 class Symbol(Expr):
 
@@ -52,7 +49,6 @@ class UnboundSymbolException(Exception):
 
     def __init__(self, symbol_name):
         Exception.__init__(self, 'undefined symbol: %s' % symbol_name)
-
 
 class Value(Expr):
 
