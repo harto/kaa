@@ -11,7 +11,6 @@ class Repl(object):
         self.runtime = runtime
 
     def loop(self):
-        # todo: install signal handlers for graceful exit
         while True:
             try:
                 exprs = self._read_exprs()
