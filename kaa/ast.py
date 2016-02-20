@@ -52,12 +52,12 @@ class Value(Expr):
     def __init__(self, value):
         self.value = value
 
-    def get(self):
-        return self.value
-
     def __eq__(self, other):
         return type(other) == type(self) \
             and other.value == self.value
 
     def __str__(self):
         return str(self.value)
+
+    def get(self):
+        return self.value
