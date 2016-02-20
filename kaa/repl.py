@@ -1,5 +1,6 @@
 from charbuf import EmptyBufferException, CharBuffer
 from reader import Reader, UnexpectedEofException
+import traceback
 
 class Repl(object):
 
@@ -14,22 +15,28 @@ class Repl(object):
         while True:
             try:
                 exprs = self._read_exprs()
-            except EOFError:
-                # user aborted input
-                # fixme: better exception needed
+                result = self.runtime.eval(exprs)
+            except KeyboardInterrupt:
+                # Ctrl-C; user wants to abandon current input
                 print
                 continue
-            result = self.runtime.eval(exprs)
-            print(result)
+            except EOFError:
+                # Ctrl-D; user wants to quit
+                print
+                break
+            except Exception:
+                traceback.print_exc()
+                continue
+            if result:
+                print(result)
 
     def _read_exprs(self):
-        input = raw_input(self.PROMPT_1)
+        s = raw_input(self.PROMPT_1)
         while True:
-            buf = CharBuffer(input)
+            buf = CharBuffer(s)
             try:
-                # list() coercion flushes out UnexpectedEofException before
-                # evaluation
+                # eagerly evaluate the expression generator
+                # to flush out unexpected EOF
                 return list(Reader().read(buf))
             except UnexpectedEofException:
-                # fixme: should be e.g. BufferExhausted? or something else
-                input += raw_input(self.PROMPT_2)
+                s += raw_input(self.PROMPT_2)

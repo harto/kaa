@@ -45,10 +45,7 @@ class Symbol(Expr):
         except KeyError:
             raise UnboundSymbolException(self.name)
 
-class UnboundSymbolException(Exception):
-
-    def __init__(self, symbol_name):
-        Exception.__init__(self, 'undefined symbol: %s' % symbol_name)
+class UnboundSymbolException(Exception): pass
 
 class Value(Expr):
 
