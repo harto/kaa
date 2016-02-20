@@ -59,34 +59,4 @@ class LineIterCharBuffer(object):
             return None
         return CharBuffer(line)
 
-class InteractiveCharBuffer(object):
-
-    def __init__(self, prompt_1, prompt_2):
-        self.prompt_1 = prompt_1
-        self.prompt_2 = prompt_2
-        self.line = None
-        self.aborted = False
-
-    def eof(self):
-        return self.aborted
-
-    def peek(self):
-        if not self.line or self.line.eof():
-            self.line = self._read_line()
-        return self.line.peek()
-
-    def pop(self):
-        c = self.peek()
-        if not c: raise EmptyBufferException()
-        self.line.pop()
-        return c
-
-    def _read_line(self):
-        try:
-            s = raw_input(self.line and self.prompt_2 or self.prompt_1)
-        except EOFError:
-            s = ''
-            self.aborted = True
-        return CharBuffer(s)
-
 class EmptyBufferException(Exception): pass

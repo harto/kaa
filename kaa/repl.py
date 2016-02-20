@@ -1,5 +1,5 @@
-from charbuf import EmptyBufferException, InteractiveCharBuffer
-from reader import Reader
+from charbuf import EmptyBufferException, CharBuffer
+from reader import Reader, UnexpectedEofException
 
 class Repl(object):
 
@@ -12,12 +12,24 @@ class Repl(object):
     def loop(self):
         # todo: install signal handlers for graceful exit
         while True:
-            buf = InteractiveCharBuffer(self.PROMPT_1, self.PROMPT_2)
             try:
-                exprs = Reader().read(buf)
-            except EmptyBufferException:
+                exprs = self._read_exprs()
+            except EOFError:
                 # user aborted input
-                # todo: better exception
+                # fixme: better exception needed
+                print
                 continue
             result = self.runtime.eval(exprs)
             print(result)
+
+    def _read_exprs(self):
+        input = raw_input(self.PROMPT_1)
+        while True:
+            buf = CharBuffer(input)
+            try:
+                # list() coercion flushes out UnexpectedEofException before
+                # evaluation
+                return list(Reader().read(buf))
+            except UnexpectedEofException:
+                # fixme: should be e.g. BufferExhausted? or something else
+                input += raw_input(self.PROMPT_2)
