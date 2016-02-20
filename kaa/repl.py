@@ -1,4 +1,4 @@
-from charbuf import EmptyBufferException, CharBuffer
+from charbuf import CharBuffer
 from reader import Reader, UnexpectedEofException
 import traceback
 
