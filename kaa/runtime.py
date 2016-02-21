@@ -1,6 +1,6 @@
 import builtins
 from charbuf import CharBuffer, LineIterCharBuffer
-from compiler import Compiler
+from compiler import compile
 from reader import Reader
 
 class Runtime(object):
@@ -18,7 +18,7 @@ class Runtime(object):
 
     def eval(self, expressions):
         result = None
-        for expr in Compiler().compile(expressions):
-            result = expr.eval(self.ns)
+        for expr in expressions:
+            result = compile(expr).eval(self.ns)
         self.ns[self.LAST_RESULT] = result
         return result

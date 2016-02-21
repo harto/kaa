@@ -1,5 +1,5 @@
 from kaa.ast import Def, Func, Lambda, Let, List, Symbol, Value
-from kaa.compiler import CompilationException, Compiler
+from kaa.compiler import CompilationException, compile
 from unittest import TestCase
 
 class CompilerTest(TestCase):
@@ -45,4 +45,4 @@ class CompilerTest(TestCase):
         self.assertEqual([List([Symbol('x')])], list(compiled.body))
 
     def _compile(self, expr):
-        return next(Compiler().compile([expr]))
+        return compile(expr)
