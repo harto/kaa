@@ -1,4 +1,4 @@
-from kaa.ast import Def, Func, List, Symbol, UnboundSymbolException, Value
+from kaa.ast import *
 from unittest import TestCase
 
 class DefTest(TestCase):
@@ -15,6 +15,20 @@ class FuncTest(TestCase):
     def test_call_proxies_to_python_function(self):
         add = Func(lambda x, y: x + y)
         self.assertEqual(5, add(2, 3))
+
+class LambdaTest(TestCase):
+
+    def test_call_produces_expected_result(self):
+        lam = Lambda(List([Symbol('x'),
+                           Symbol('y')]),
+                     [List([Func(lambda a, b: a + b),
+                            Symbol('x'),
+                            Symbol('y')])])
+        self.assertEqual(3, lam({}, 1, 2))
+
+    def test_call_with_invalid_arity(self):
+        lam = Lambda(List())
+        self.assertRaises(ArityException, lambda: lam({}, 'foo'))
 
 class ListTest(TestCase):
 

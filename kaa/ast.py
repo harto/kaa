@@ -16,6 +16,7 @@ class Def(Expr):
     def eval(self, env):
         return self.symbol.bind(self.value, env)
 
+# todo: replace this with some kind of Python-lambda interop syntax
 class Func(Expr):
 
     def __init__(self, fn):
@@ -24,6 +25,34 @@ class Func(Expr):
     def __call__(self, *args):
         result = self.fn(*args)
         return result
+
+class Lambda(Expr):
+
+    # todo: capture lexical bindings
+    def __init__(self, params, body = []):
+        self.params = params
+        self.body = body
+
+    def __call__(self, env, *args):
+        num_expected = len(self.params)
+        num_received = len(args)
+        if num_received != num_expected:
+            raise ArityException('expected %d args, got %d' % (num_expected,
+                                                               num_received))
+        # todo: replace with generic binding mechanism, e.g. `let`
+        param_names = [symbol.name for symbol in self.params]
+        prev_bindings = dict((k, env[k]) for k in param_names if k in env)
+        tmp_bindings = dict(zip(param_names, args))
+        env.update(tmp_bindings)
+        result = Nil
+        try:
+            for expr in self.body:
+                result = expr.eval(env)
+        finally:
+            env.update(prev_bindings)
+        return result
+
+class ArityException(Exception): pass
 
 class List(Expr):
 
@@ -37,6 +66,9 @@ class List(Expr):
     def __getitem__(self, i):
         return self.members[i]
 
+    def __len__(self):
+        return len(self.members)
+
     def append(self, x):
         self.members.append(x)
 
@@ -45,7 +77,11 @@ class List(Expr):
             return self
         fn = self[0].eval(env)
         args = [expr.eval(env) for expr in self[1:]]
-        return fn(*args)
+        # fixme: figure out consistent function call convention
+        if isinstance(fn, Lambda):
+            return fn(env, *args)
+        else:
+            return fn(*args)
 
 class Symbol(Expr):
 
@@ -82,3 +118,5 @@ class Value(Expr):
 
     def get(self):
         return self.value
+
+Nil = Value(None)

@@ -1,4 +1,4 @@
-from kaa.ast import Def, List, Symbol, Value
+from kaa.ast import Def, Lambda, List, Symbol, Value
 
 # AST-level transformations, e.g. parsing special forms
 
@@ -16,18 +16,32 @@ class Compiler(object):
 
     def _compile_list(self, l):
         if l[0] == Symbol('def'):
-            return self._compile_def(l[1:])
+            return self._compile_def(l)
+        elif l[0] == Symbol('lambda'):
+            return self._compile_lambda(l)
         else:
             # todo: decide on lists or generators everywhere
-            return List(list(self._compile(expr for expr in l)))
+            return List(list(self.compile(l)))
 
-    def _compile_def(self, binding):
+    def _compile_def(self, l):
         try:
-            sym, val = binding
+            sym, val = l[1:]
         except ValueError:
             sym = val = None
         if not isinstance(sym, Symbol):
-            raise CompilationException('def accepts one symbol and one value')
-        return Def(sym, val)
+            raise CompilationException('def expects symbol, value')
+        return Def(sym, self._compile(val))
+
+    def _compile_lambda(self, l):
+        try:
+            params = l[1]
+        except IndexError:
+            params = None
+        if not isinstance(params, List):
+            raise CompilationException('lambda expects list of params as first arg')
+        if not all(isinstance(p, Symbol) for p in params):
+            raise CompilationException('lambda params must be symbols')
+        body = l[2:]
+        return Lambda(params, self.compile(body))
 
 class CompilationException(Exception): pass
