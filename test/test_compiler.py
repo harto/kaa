@@ -42,7 +42,7 @@ class CompilerTest(TestCase):
         compiled = self._compile(expr)
         self.assertIsInstance(compiled, Let)
         self.assertEqual(List([Symbol('x'), Value(42)]), compiled.bindings)
-        self.assertEqual([List([Symbol('x')])], list(compiled.body))
+        self.assertEqual([List([Symbol('x')])], list(compiled.body.exprs))
 
     def _compile(self, expr):
         return compile(expr)

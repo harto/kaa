@@ -24,6 +24,17 @@ class Expr(object):
     def eval(self, ns):
         return self
 
+class Body(Expr):
+
+    def __init__(self, exprs = []):
+        self.exprs = exprs
+
+    def eval(self, ns):
+        result = Nil
+        for expr in self.exprs:
+            result = expr.eval(ns)
+        return result
+
 class Def(Expr):
 
     def __init__(self, symbol, value):
@@ -46,28 +57,29 @@ class Func(Expr):
 class Lambda(Expr):
 
     # todo: capture lexical bindings
-    def __init__(self, params, body = []):
+    def __init__(self, params, body):
         self.params = params
         self.body = body
 
     def __call__(self, ns, *args):
+        self._check_arity(args)
+        ns = Namespace(bindings=dict(zip((p.name for p in self.params),
+                                         args)),
+                       parent=ns)
+        return self.body.eval(ns)
+
+    def _check_arity(self, args):
         num_expected = len(self.params)
         num_received = len(args)
         if num_received != num_expected:
             raise ArityException('expected %d args, got %d' % (num_expected,
                                                                num_received))
-        ns = Namespace(bindings=dict(zip((p.name for p in self.params), args)),
-                       parent=ns)
-        result = Nil
-        for expr in self.body:
-            result = expr.eval(ns)
-        return result
 
 class ArityException(Exception): pass
 
 class Let(Expr):
 
-    def __init__(self, bindings, body = []):
+    def __init__(self, bindings, body):
         self.bindings = bindings
         self.body = body
 
@@ -76,10 +88,7 @@ class Let(Expr):
         ns = Namespace(parent=ns)
         for sym, val in binding_pairs:
             ns[sym.name] = val.eval(ns)
-        result = Nil
-        for expr in self.body:
-            result = expr.eval(ns)
-        return result
+        return self.body.eval(ns)
 
 class List(Expr):
 

@@ -1,4 +1,4 @@
-from kaa.ast import Def, Lambda, Let, List, Symbol, Value
+from kaa.ast import Body, Def, Lambda, Let, List, Symbol, Value
 
 # AST-level transformations, e.g. parsing special forms
 
@@ -40,8 +40,8 @@ def _compile_lambda(l):
         _err('lambda expects list of params as first arg')
     if not all(isinstance(p, Symbol) for p in params):
         _err('lambda params must be symbols')
-    body = l[2:]
-    return Lambda(params, (compile(expr) for expr in body))
+    body = Body(compile(expr) for expr in l[2:])
+    return Lambda(params, body)
 
 def _compile_let(l):
     try:
@@ -50,7 +50,7 @@ def _compile_let(l):
         first = None
     rest = l[2:]
     bindings = _compile_let_bindings(first)
-    body = (compile(expr) for expr in rest)
+    body = Body(compile(expr) for expr in rest)
     return Let(bindings, body)
 
 def _compile_let_bindings(bindings):
