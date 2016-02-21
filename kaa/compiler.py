@@ -32,7 +32,7 @@ class Compiler(object):
         except ValueError:
             sym = val = None
         if not isinstance(sym, Symbol):
-            raise CompilationException('def expects symbol, value')
+            self._err('def expects symbol, value')
         return Def(sym, self._compile(val))
 
     def _compile_lambda(self, l):
@@ -41,10 +41,13 @@ class Compiler(object):
         except IndexError:
             params = None
         if not isinstance(params, List):
-            raise CompilationException('lambda expects list of params as first arg')
+            self._err('lambda expects list of params as first arg')
         if not all(isinstance(p, Symbol) for p in params):
-            raise CompilationException('lambda params must be symbols')
+            self._err('lambda params must be symbols')
         body = l[2:]
         return Lambda(params, self.compile(body))
+
+    def _err(self, msg = None):
+        raise CompilationException(msg)
 
 class CompilationException(Exception): pass
