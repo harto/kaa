@@ -1,2 +1,15 @@
 #!/usr/bin/env bash
-python -m unittest discover -s "$(dirname $0)"/test
+set -e
+cd "$(dirname $0)"
+
+echo "=================="
+echo "Running unit tests"
+echo "=================="
+python -m unittest discover -s test
+
+echo
+echo "===================="
+echo "Running system tests"
+echo "===================="
+python -m kaa.main test.lisp
+echo "OK"
