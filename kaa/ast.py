@@ -9,10 +9,6 @@ class Def(Expr):
         self.symbol = symbol
         self.value = value
 
-    def __eq__(self, other):
-        return type(other) == type(self) \
-            and other.__dict__ == self.__dict__
-
     def eval(self, env):
         return self.symbol.bind(self.value, env)
 

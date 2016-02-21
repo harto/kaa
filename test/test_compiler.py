@@ -15,7 +15,9 @@ class CompilerTest(TestCase):
     def test_compile_def(self):
         expr = List([Symbol('def'), Symbol('foo'), Value(42)])
         compiled = self._compile(expr)
-        self.assertEqual(Def(Symbol('foo'), Value(42)), compiled)
+        self.assertIsInstance(compiled, Def)
+        self.assertEqual(Symbol('foo'), compiled.symbol)
+        self.assertEqual(Value(42), compiled.value)
 
     def test_compile_invalid_def(self):
         expr = List([Symbol('def'), Symbol('foo'), Value(42), Symbol('bar')])
