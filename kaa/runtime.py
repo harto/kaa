@@ -5,6 +5,8 @@ from reader import Reader
 
 class Runtime(object):
 
+    LAST_RESULT = '^'
+
     def __init__(self):
         self.env = builtins.env()
 
@@ -18,4 +20,5 @@ class Runtime(object):
         result = None
         for expr in Compiler().compile(expressions):
             result = expr.eval(self.env)
+        self.env[self.LAST_RESULT] = result
         return result
