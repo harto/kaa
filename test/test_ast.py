@@ -33,7 +33,7 @@ class LambdaTest(TestCase):
 class LetTest(TestCase):
 
     def test_body_evaluates_with_bindings(self):
-        let = Let(List([Symbol('x'), Value(42)]),
+        let = Let(LetBindings([(Symbol('x'), Value(42))]),
                   Body([Symbol('x')]))
         ns = Namespace({'x': Value(5)})
         self.assertEqual(Value(42), let.eval(ns))

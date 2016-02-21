@@ -84,11 +84,18 @@ class Let(Expr):
         self.body = body
 
     def eval(self, ns):
-        binding_pairs = zip(*(iter(self.bindings),) * 2)
+        return self.body.eval(self.bindings.overlay_onto(ns))
+
+class LetBindings(object):
+
+    def __init__(self, pairs):
+        self.pairs = pairs
+
+    def overlay_onto(self, ns):
         ns = Namespace(parent=ns)
-        for sym, val in binding_pairs:
+        for sym, val in self.pairs:
             ns[sym.name] = val.eval(ns)
-        return self.body.eval(ns)
+        return ns
 
 class List(Expr):
 
