@@ -3,6 +3,19 @@ class Expr(object):
     def eval(self, env):
         return self
 
+class Def(Expr):
+
+    def __init__(self, symbol, value):
+        self.symbol = symbol
+        self.value = value
+
+    def __eq__(self, other):
+        return type(other) == type(self) \
+            and other.__dict__ == self.__dict__
+
+    def eval(self, env):
+        return self.symbol.bind(self.value, env)
+
 class Func(Expr):
 
     def __init__(self, fn):
@@ -19,6 +32,10 @@ class List(Expr):
 
     def __getitem__(self, i):
         return self.members[i]
+
+    def __eq__(self, other):
+        return type(other) == type(self) \
+            and other.members == self.members
 
     def append(self, x):
         self.members.append(x)
@@ -38,6 +55,10 @@ class Symbol(Expr):
     def __eq__(self, other):
         return type(other) == type(self) \
             and other.name == self.name
+
+    def bind(self, value, env):
+        env[self.name] = value.eval(env)
+        return self.eval(env)
 
     def eval(self, env):
         try:

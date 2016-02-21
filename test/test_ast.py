@@ -1,5 +1,14 @@
-from kaa.ast import Func, List, Symbol, UnboundSymbolException, Value
+from kaa.ast import Def, Func, List, Symbol, UnboundSymbolException, Value
 from unittest import TestCase
+
+class DefTest(TestCase):
+
+    def test_def_sets_value_in_env(self):
+        d = Def(Symbol('x'), Value(42))
+        env = {}
+        result = d.eval(env)
+        self.assertEqual(result, Value(42))
+        self.assertEqual(result, env['x'])
 
 class FuncTest(TestCase):
 
