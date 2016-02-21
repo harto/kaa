@@ -1,4 +1,4 @@
-from kaa.ast import Def, Lambda, List, Symbol, Value
+from kaa.ast import Def, Lambda, Let, List, Symbol, Value
 
 # AST-level transformations, e.g. parsing special forms
 
@@ -22,6 +22,8 @@ class Compiler(object):
             return self._compile_def(l)
         elif first == Symbol('lambda'):
             return self._compile_lambda(l)
+        elif first == Symbol('let'):
+            return self._compile_let(l)
         else:
             # todo: decide on lists or generators everywhere
             return List(list(self.compile(l)))
@@ -46,6 +48,25 @@ class Compiler(object):
             self._err('lambda params must be symbols')
         body = l[2:]
         return Lambda(params, self.compile(body))
+
+    def _compile_let(self, l):
+        try:
+            bindings = l[1]
+        except IndexError:
+            bindings = None
+        if not isinstance(bindings, List):
+            self._err('let requires list of bindings as first arg')
+        if len(bindings) % 2:
+            self._err('let requires matching pairs of key-value bindings')
+        binding_pairs = zip(*(iter(bindings),) * 2)
+        compiled_bindings = List()
+        for sym, val in binding_pairs:
+            if not isinstance(sym, Symbol):
+                self._err('binding LHS must be a symbol')
+            compiled_bindings.append(sym)
+            compiled_bindings.append(self._compile(val))
+        body = l[2:]
+        return Let(compiled_bindings, self.compile(body))
 
     def _err(self, msg = None):
         raise CompilationException(msg)

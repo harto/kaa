@@ -30,6 +30,14 @@ class LambdaTest(TestCase):
         lam = Lambda(List())
         self.assertRaises(ArityException, lambda: lam({}, 'foo'))
 
+class LetTest(TestCase):
+
+    def test_body_evaluates_with_bindings(self):
+        let = Let(List([Symbol('x'), Value(42)]),
+                  [Symbol('x')])
+        env = {'x': Value(5)}
+        self.assertEqual(Value(42), let.eval(env))
+
 class ListTest(TestCase):
 
     def test_empty_list_evaluates_to_itself(self):

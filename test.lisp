@@ -21,4 +21,14 @@
 (assert (= 3 (add 1 2)))
 (assert (= 5 x))
 
+;; let
+
+(def x 1)
+(def y 42)
+(let (x 2)
+  (let (x y)
+    (assert (= y x)))
+  (assert (= 2 x)))
+(assert (= 1 x))
+
 ;(assert (= 1 2))

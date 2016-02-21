@@ -54,6 +54,33 @@ class Lambda(Expr):
 
 class ArityException(Exception): pass
 
+class Let(Expr):
+
+    def __init__(self, bindings, body = []):
+        self.bindings = bindings
+        self.body = body
+
+    def eval(self, env):
+        binding_pairs = zip(*(iter(self.bindings),) * 2)
+        # todo: scopes, rather than a single mutable env
+        diffs = []
+        result = Nil
+        try:
+            for sym, val in binding_pairs:
+                diff = {}
+                name = sym.name
+                if name in env:
+                    diff[name] = env[name]
+                diffs.append(diff)
+                val = val.eval(env)
+                env[name] = val
+            for expr in self.body:
+                result = expr.eval(env)
+        finally:
+            while diffs:
+                env.update(diffs.pop())
+        return result
+
 class List(Expr):
 
     def __init__(self, members = None):

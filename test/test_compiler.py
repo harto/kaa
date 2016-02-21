@@ -1,4 +1,4 @@
-from kaa.ast import Def, Func, Lambda, List, Symbol, Value
+from kaa.ast import Def, Func, Lambda, Let, List, Symbol, Value
 from kaa.compiler import CompilationException, Compiler
 from unittest import TestCase
 
@@ -32,6 +32,15 @@ class CompilerTest(TestCase):
         expr = List([Symbol('lambda'), List([Value(3)])])
         self.assertRaises(CompilationException,
                           lambda: self._compile(expr))
+
+    def test_compile_let(self):
+        expr = List([Symbol('let'),
+                     List([Symbol('x'), Value(42)]),
+                     List([Symbol('x')])])
+        compiled = self._compile(expr)
+        self.assertIsInstance(compiled, Let)
+        self.assertEqual(List([Symbol('x'), Value(42)]), compiled.bindings)
+        self.assertEqual([List([Symbol('x')])], list(compiled.body))
 
     def _compile(self, expr):
         return next(Compiler().compile([expr]))
