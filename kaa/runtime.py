@@ -8,7 +8,7 @@ class Runtime(object):
     LAST_RESULT = '^'
 
     def __init__(self):
-        self.env = builtins.env()
+        self.ns = builtins.namespace()
 
     def eval_lines(self, lines):
         return self.eval(Reader().read(LineIterCharBuffer(lines)))
@@ -19,6 +19,6 @@ class Runtime(object):
     def eval(self, expressions):
         result = None
         for expr in Compiler().compile(expressions):
-            result = expr.eval(self.env)
-        self.env[self.LAST_RESULT] = result
+            result = expr.eval(self.ns)
+        self.ns[self.LAST_RESULT] = result
         return result

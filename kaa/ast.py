@@ -1,6 +1,27 @@
+class Namespace(object):
+
+    def __init__(self, bindings = None, parent = None):
+        self.parent = parent
+        self.bindings = bindings or {}
+
+    def __contains__(self, k):
+        return k in self.bindings
+
+    def __getitem__(self, k):
+        try:
+            return self.bindings[k]
+        except KeyError:
+            if self.parent:
+                return self.parent[k]
+            else:
+                raise
+
+    def __setitem__(self, k, v):
+        self.bindings[k] = v
+
 class Expr(object):
 
-    def eval(self, env):
+    def eval(self, ns):
         return self
 
 class Def(Expr):
@@ -9,8 +30,8 @@ class Def(Expr):
         self.symbol = symbol
         self.value = value
 
-    def eval(self, env):
-        return self.symbol.bind(self.value, env)
+    def eval(self, ns):
+        return self.symbol.bind(self.value, ns)
 
 # todo: replace this with some kind of Python-lambda interop syntax
 class Func(Expr):
@@ -29,23 +50,17 @@ class Lambda(Expr):
         self.params = params
         self.body = body
 
-    def __call__(self, env, *args):
+    def __call__(self, ns, *args):
         num_expected = len(self.params)
         num_received = len(args)
         if num_received != num_expected:
             raise ArityException('expected %d args, got %d' % (num_expected,
                                                                num_received))
-        # todo: replace with generic binding mechanism, e.g. `let`
-        param_names = [symbol.name for symbol in self.params]
-        prev_bindings = dict((k, env[k]) for k in param_names if k in env)
-        tmp_bindings = dict(zip(param_names, args))
-        env.update(tmp_bindings)
+        ns = Namespace(bindings=dict(zip((p.name for p in self.params), args)),
+                       parent=ns)
         result = Nil
-        try:
-            for expr in self.body:
-                result = expr.eval(env)
-        finally:
-            env.update(prev_bindings)
+        for expr in self.body:
+            result = expr.eval(ns)
         return result
 
 class ArityException(Exception): pass
@@ -56,25 +71,14 @@ class Let(Expr):
         self.bindings = bindings
         self.body = body
 
-    def eval(self, env):
+    def eval(self, ns):
         binding_pairs = zip(*(iter(self.bindings),) * 2)
-        # todo: scopes, rather than a single mutable env
-        diffs = []
+        ns = Namespace(parent=ns)
+        for sym, val in binding_pairs:
+            ns[sym.name] = val.eval(ns)
         result = Nil
-        try:
-            for sym, val in binding_pairs:
-                diff = {}
-                name = sym.name
-                if name in env:
-                    diff[name] = env[name]
-                diffs.append(diff)
-                val = val.eval(env)
-                env[name] = val
-            for expr in self.body:
-                result = expr.eval(env)
-        finally:
-            while diffs:
-                env.update(diffs.pop())
+        for expr in self.body:
+            result = expr.eval(ns)
         return result
 
 class List(Expr):
@@ -95,14 +99,14 @@ class List(Expr):
     def append(self, x):
         self.members.append(x)
 
-    def eval(self, env):
+    def eval(self, ns):
         if not self.members:
             return self
-        fn = self[0].eval(env)
-        args = [expr.eval(env) for expr in self[1:]]
+        fn = self[0].eval(ns)
+        args = [expr.eval(ns) for expr in self[1:]]
         # fixme: figure out consistent function call convention
         if isinstance(fn, Lambda):
-            return fn(env, *args)
+            return fn(ns, *args)
         else:
             return fn(*args)
 
@@ -115,13 +119,13 @@ class Symbol(Expr):
         return type(other) == type(self) \
             and other.name == self.name
 
-    def bind(self, value, env):
-        env[self.name] = value.eval(env)
-        return self.eval(env)
+    def bind(self, value, ns):
+        ns[self.name] = value.eval(ns)
+        return self.eval(ns)
 
-    def eval(self, env):
+    def eval(self, ns):
         try:
-            return env[self.name]
+            return ns[self.name]
         except KeyError:
             raise UnboundSymbolException(self.name)
 

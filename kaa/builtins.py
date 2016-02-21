@@ -1,4 +1,4 @@
-from ast import Func, Value
+from ast import Func, Namespace, Value
 
 # todo: should be a macro
 def _assert(val):
@@ -13,9 +13,9 @@ def pr(*xs):
     print(' '.join(map(str, xs)))
 
 # todo: build dynamically? using e.g. decorators
-def env():
-    return {'+': add,
-            '=': equals,
-            '*': multiply,
-            'assert': _assert,
-            'print': pr}
+def namespace():
+    return Namespace({'+': add,
+                      '=': equals,
+                      '*': multiply,
+                      'assert': _assert,
+                      'print': pr})

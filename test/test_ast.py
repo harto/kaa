@@ -5,10 +5,10 @@ class DefTest(TestCase):
 
     def test_def_sets_value_in_env(self):
         d = Def(Symbol('x'), Value(42))
-        env = {}
-        result = d.eval(env)
+        ns = Namespace()
+        result = d.eval(ns)
         self.assertEqual(result, Value(42))
-        self.assertEqual(result, env['x'])
+        self.assertEqual(result, ns['x'])
 
 class FuncTest(TestCase):
 
@@ -35,8 +35,8 @@ class LetTest(TestCase):
     def test_body_evaluates_with_bindings(self):
         let = Let(List([Symbol('x'), Value(42)]),
                   [Symbol('x')])
-        env = {'x': Value(5)}
-        self.assertEqual(Value(42), let.eval(env))
+        ns = Namespace({'x': Value(5)})
+        self.assertEqual(Value(42), let.eval(ns))
 
 class ListTest(TestCase):
 
