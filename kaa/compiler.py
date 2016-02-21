@@ -15,9 +15,12 @@ class Compiler(object):
             return expr
 
     def _compile_list(self, l):
-        if l[0] == Symbol('def'):
+        if not len(l):
+            return l
+        first = l[0]
+        if first == Symbol('def'):
             return self._compile_def(l)
-        elif l[0] == Symbol('lambda'):
+        elif first == Symbol('lambda'):
             return self._compile_lambda(l)
         else:
             # todo: decide on lists or generators everywhere
