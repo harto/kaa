@@ -30,12 +30,12 @@ class List(Expr):
     def __init__(self, members = None):
         self.members = members or []
 
-    def __getitem__(self, i):
-        return self.members[i]
-
     def __eq__(self, other):
         return type(other) == type(self) \
             and other.members == self.members
+
+    def __getitem__(self, i):
+        return self.members[i]
 
     def append(self, x):
         self.members.append(x)
