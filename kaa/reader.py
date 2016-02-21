@@ -22,6 +22,10 @@ class Reader(object):
                 while chars.peek() and chars.peek().isspace():
                     chars.pop()
                 continue
+            elif c == ';':
+                while chars.peek():
+                    chars.pop()
+                continue
             elif c == '(':
                 yield self._read_list(chars)
             elif c == ')':
