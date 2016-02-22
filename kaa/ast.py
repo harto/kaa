@@ -1,11 +1,12 @@
 class Namespace(object):
 
     def __init__(self, bindings = None, parent = None):
-        self.parent = parent
         self.bindings = bindings or {}
+        self.parent = parent
 
     def __contains__(self, k):
-        return k in self.bindings
+        return k in self.bindings or \
+            (self.parent and k in self.parent)
 
     def __getitem__(self, k):
         try:
@@ -18,6 +19,13 @@ class Namespace(object):
 
     def __setitem__(self, k, v):
         self.bindings[k] = v
+
+    def flatten(self):
+        if self.parent is None:
+            return self.bindings
+        bindings = self.bindings.copy()
+        bindings.update(self.parent.bindings)
+        return bindings
 
 class Expr(object):
 
@@ -56,13 +64,16 @@ class Func(Expr):
 
 class Lambda(Expr):
 
-    # todo: capture lexical bindings
     def __init__(self, param_names, body):
         self.param_names = param_names
         self.body = body
+        self.lexical_bindings = None
 
     def __call__(self, ns, *args):
         self._check_arity(args)
+        if self.lexical_bindings:
+            ns = Namespace(bindings=self.lexical_bindings,
+                           parent=ns)
         ns = Namespace(bindings=dict(zip(self.param_names, args)),
                        parent=ns)
         return self.body.eval(ns)
@@ -73,6 +84,19 @@ class Lambda(Expr):
         if num_received != num_expected:
             raise ArityException('expected %d args, got %d' % (num_expected,
                                                                num_received))
+
+    def eval(self, ns):
+        self.capture_lexical_bindings(ns)
+        return self
+
+    def capture_lexical_bindings(self, ns):
+        if self.lexical_bindings is not None:
+            return
+        self.lexical_bindings = {}
+        free_vars = analyzer.free_vars(self)
+        for name in free_vars:
+            if name in ns:
+                self.lexical_bindings[name] = ns[name]
 
 class ArityException(Exception): pass
 
@@ -89,6 +113,9 @@ class LetBindings(object):
 
     def __init__(self, pairs):
         self.pairs = pairs
+
+    def names(self):
+        return [sym.name for sym, _ in self.pairs]
 
     def overlay_onto(self, ns):
         ns = Namespace(parent=ns)
@@ -162,3 +189,5 @@ class Value(Expr):
         return self.value
 
 Nil = Value(None)
+
+from kaa import analyzer

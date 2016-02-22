@@ -24,4 +24,15 @@
   (assert (= 2 x)))
 (assert (= 1 x))
 
+;; closures
+(def inc (let (one 1)
+           (lambda (x)
+             (+ one x))))
+(assert (= 43 (inc 42)))
+;; (def inc2 (let (b 1)
+;;             (lambda (x)
+;;               (let (c b)
+;;                 (+ c x)))))
+;; (assert (= 4 (inc2 3)))
+
 ;(assert (= 1 2))
