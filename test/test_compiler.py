@@ -28,7 +28,7 @@ class CompilerTest(TestCase):
         expr = List([Symbol('lambda'), List([Symbol('foo')])])
         compiled = self._compile(expr)
         self.assertIsInstance(compiled, Lambda)
-        self.assertEqual(List([Symbol('foo')]), compiled.params)
+        self.assertEqual(['foo'], compiled.param_names)
 
     def test_compile_invalid_lambda(self):
         expr = List([Symbol('lambda'), List([Value(3)])])

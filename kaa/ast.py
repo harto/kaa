@@ -57,19 +57,18 @@ class Func(Expr):
 class Lambda(Expr):
 
     # todo: capture lexical bindings
-    def __init__(self, params, body):
-        self.params = params
+    def __init__(self, param_names, body):
+        self.param_names = param_names
         self.body = body
 
     def __call__(self, ns, *args):
         self._check_arity(args)
-        ns = Namespace(bindings=dict(zip((p.name for p in self.params),
-                                         args)),
+        ns = Namespace(bindings=dict(zip(self.param_names, args)),
                        parent=ns)
         return self.body.eval(ns)
 
     def _check_arity(self, args):
-        num_expected = len(self.params)
+        num_expected = len(self.param_names)
         num_received = len(args)
         if num_received != num_expected:
             raise ArityException('expected %d args, got %d' % (num_expected,

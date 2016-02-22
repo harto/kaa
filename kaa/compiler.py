@@ -41,7 +41,7 @@ def _compile_lambda(l):
     if not all(isinstance(p, Symbol) for p in params):
         _err('lambda params must be symbols')
     body = Body(compile(expr) for expr in l[2:])
-    return Lambda(params, body)
+    return Lambda([p.name for p in params], body)
 
 def _compile_let(l):
     try:

@@ -19,15 +19,14 @@ class FuncTest(TestCase):
 class LambdaTest(TestCase):
 
     def test_call_produces_expected_result(self):
-        lam = Lambda(List([Symbol('x'),
-                           Symbol('y')]),
+        lam = Lambda(['x', 'y'],
                      Body([List([Func(lambda a, b: a + b),
                             Symbol('x'),
                             Symbol('y')])]))
         self.assertEqual(3, lam({}, 1, 2))
 
     def test_call_with_invalid_arity(self):
-        lam = Lambda(List(), Body())
+        lam = Lambda([], Body())
         self.assertRaises(ArityException, lambda: lam({}, 'foo'))
 
 class LetTest(TestCase):
