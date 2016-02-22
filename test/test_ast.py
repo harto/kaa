@@ -23,11 +23,11 @@ class LambdaTest(TestCase):
                      Body([List([Func(lambda a, b: a + b),
                             Symbol('x'),
                             Symbol('y')])]))
-        self.assertEqual(3, lam({}, 1, 2))
+        self.assertEqual(3, lam(Namespace(), 1, 2))
 
     def test_call_with_invalid_arity(self):
         lam = Lambda([], Body())
-        self.assertRaises(ArityException, lambda: lam({}, 'foo'))
+        self.assertRaises(ArityException, lambda: lam(Namespace(), 'foo'))
 
 class LetTest(TestCase):
 
