@@ -19,8 +19,7 @@ def _compile_list(l):
     elif first == Symbol('let'):
         return _compile_let(l)
     else:
-        # todo: decide on lists or generators everywhere
-        return List(list(compile(expr) for expr in l))
+        return List([compile(expr) for expr in l])
 
 def _compile_def(l):
     try:
@@ -40,7 +39,7 @@ def _compile_lambda(l):
         _err('lambda expects list of params as first arg')
     if not all(isinstance(p, Symbol) for p in params):
         _err('lambda params must be symbols')
-    body = Body(compile(expr) for expr in l[2:])
+    body = Body([compile(expr) for expr in l[2:]])
     return Lambda([p.name for p in params], body)
 
 def _compile_let(l):
@@ -50,7 +49,7 @@ def _compile_let(l):
         first = None
     rest = l[2:]
     bindings = _compile_let_bindings(first)
-    body = Body(compile(expr) for expr in rest)
+    body = Body([compile(expr) for expr in rest])
     return Let(bindings, body)
 
 def _compile_let_bindings(bindings):
