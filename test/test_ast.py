@@ -21,20 +21,20 @@ class LambdaTest(TestCase):
 
     def test_call_produces_expected_result(self):
         lam = Lambda(['x', 'y'],
-                     Body([List([lambda a, b: a + b,
-                                 Symbol('x'),
-                                 Symbol('y')])]))
+                     [List([lambda a, b: a + b,
+                            Symbol('x'),
+                            Symbol('y')])])
         self.assertEqual(3, lam(Namespace(), 1, 2))
 
     def test_call_with_invalid_arity(self):
-        lam = Lambda([], Body())
+        lam = Lambda([], [])
         self.assertRaises(ArityException, lambda: lam(Namespace(), 'foo'))
 
 class LetTest(TestCase):
 
     def test_body_evaluates_with_bindings(self):
         let = Let([('x', 42)],
-                  Body([Symbol('x')]))
+                  [Symbol('x')])
         ns = Namespace({'x': 5})
         self.assertEqual(42, eval(let, ns))
 

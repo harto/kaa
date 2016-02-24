@@ -16,10 +16,6 @@ def free_vars(expr, scope = Scope()):
             return set()
         else:
             return set([expr.name])
-    elif isinstance(expr, List):
-        return collect_free_vars(expr, scope)
-    elif isinstance(expr, Body):
-        return collect_free_vars(expr.exprs, scope)
     elif isinstance(expr, Lambda):
         scope = Scope(declared=set(expr.param_names), parent=scope)
         return free_vars(expr.body, scope)
@@ -27,10 +23,10 @@ def free_vars(expr, scope = Scope()):
         # fixme: let bindings RHS may have free vars
         scope = Scope(declared=set(k for k, _ in let.bindings), parent=scope)
         return free_vars(expr.body, scope)
-    else:
+    try: # iterable
+        return reduce(set.union,
+                      (free_vars(e, scope) for e in expr),
+                      set())
+    except TypeError:
         return set()
 
-def collect_free_vars(iterable, scope):
-    return reduce(set.union,
-                  (free_vars(expr, scope) for expr in iterable),
-                  set())

@@ -1,4 +1,4 @@
-from evaluator import eval
+from evaluator import eval, eval_all
 
 class Namespace(object):
 
@@ -29,17 +29,6 @@ class Namespace(object):
         bindings.update(self.parent.bindings)
         return bindings
 
-class Body(object):
-
-    def __init__(self, exprs = []):
-        self.exprs = exprs
-
-    def eval(self, ns):
-        result = None
-        for expr in self.exprs:
-            result = eval(expr, ns)
-        return result
-
 class Def(object):
 
     def __init__(self, symbol, value):
@@ -63,7 +52,7 @@ class Lambda(object):
                            parent=ns)
         ns = Namespace(bindings=dict(zip(self.param_names, args)),
                        parent=ns)
-        return eval(self.body, ns)
+        return eval_all(self.body, ns)
 
     def _check_arity(self, args):
         num_expected = len(self.param_names)
@@ -94,7 +83,7 @@ class Let(object):
         self.body = body
 
     def eval(self, ns):
-        return eval(self.body, self.with_bindings(ns))
+        return eval_all(self.body, self.with_bindings(ns))
 
     def with_bindings(self, ns):
         ns = Namespace(parent=ns)
