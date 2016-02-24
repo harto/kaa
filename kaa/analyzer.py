@@ -24,8 +24,8 @@ def free_vars(expr, scope = Scope()):
         scope = Scope(declared=set(expr.param_names), parent=scope)
         return free_vars(expr.body, scope)
     elif isinstance(expr, Let):
-        # fixme: LetBindings RHS may have free vars
-        scope = Scope(declared=set(expr.bindings.names()), parent=scope)
+        # fixme: let bindings RHS may have free vars
+        scope = Scope(declared=set(k for k, _ in let.bindings), parent=scope)
         return free_vars(expr.body, scope)
     else:
         return set()

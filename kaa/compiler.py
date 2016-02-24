@@ -1,4 +1,4 @@
-from kaa.ast import Body, Def, Lambda, Let, LetBindings, List, Symbol
+from kaa.ast import Body, Def, Lambda, Let, List, Symbol
 
 # AST-level transformations, e.g. parsing special forms
 
@@ -62,8 +62,8 @@ def _compile_let_bindings(bindings):
     for sym, val in pairs:
         if not isinstance(sym, Symbol):
             _err('value must be bound to symbol')
-        compiled.append((sym, compile(val)))
-    return LetBindings(compiled)
+        compiled.append((sym.name, compile(val)))
+    return compiled
 
 def _err(msg = None):
         raise CompilationException(msg)

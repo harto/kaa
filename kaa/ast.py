@@ -94,20 +94,12 @@ class Let(object):
         self.body = body
 
     def eval(self, ns):
-        return eval(self.body, self.bindings.overlay_onto(ns))
+        return eval(self.body, self.with_bindings(ns))
 
-class LetBindings(object):
-
-    def __init__(self, pairs):
-        self.pairs = pairs
-
-    def names(self):
-        return [sym.name for sym, _ in self.pairs]
-
-    def overlay_onto(self, ns):
+    def with_bindings(self, ns):
         ns = Namespace(parent=ns)
-        for sym, val in self.pairs:
-            ns[sym.name] = eval(val, ns)
+        for name, expr in self.bindings:
+            ns[name] = eval(expr, ns)
         return ns
 
 class List(object):
