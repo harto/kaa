@@ -10,6 +10,9 @@ class Scope(object):
         return name in self.declared or \
             (self.parent and name in self.parent)
 
+    def declare(self, x):
+        self.declared.add(x)
+
 def free_vars(expr, scope = Scope()):
     if isinstance(expr, Symbol):
         if expr.name in scope:
@@ -20,9 +23,7 @@ def free_vars(expr, scope = Scope()):
         scope = Scope(declared=set(expr.param_names), parent=scope)
         return free_vars(expr.body, scope)
     elif isinstance(expr, Let):
-        # fixme: let bindings RHS may have free vars
-        scope = Scope(declared=set(k for k, _ in let.bindings), parent=scope)
-        return free_vars(expr.body, scope)
+        return free_vars_in_let(expr, scope)
     try: # iterable
         return reduce(set.union,
                       (free_vars(e, scope) for e in expr),
@@ -30,3 +31,11 @@ def free_vars(expr, scope = Scope()):
     except TypeError:
         return set()
 
+def free_vars_in_let(let, scope):
+    scope = Scope(parent=scope)
+    result = set()
+    for k, expr in let.bindings:
+        scope.declare(k)
+        result.update(free_vars(expr, scope))
+    result.update(free_vars(let.body, scope))
+    return result
