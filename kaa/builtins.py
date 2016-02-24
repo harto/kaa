@@ -7,7 +7,6 @@ def assert_(val):
 def print_(*xs):
     print(' '.join(map(str, xs)))
 
-# todo: clean up boilerplate
 add = lambda a, b: a + b
 eql = lambda a, b: a == b
 mul = lambda a, b: a * b

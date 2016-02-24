@@ -133,7 +133,6 @@ class List(object):
             return self
         fn = eval(self[0], ns)
         args = [eval(expr, ns) for expr in self[1:]]
-        # fixme: figure out consistent function call convention
         if isinstance(fn, Lambda):
             return fn(ns, *args)
         else:
