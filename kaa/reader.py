@@ -1,5 +1,5 @@
 import re
-from ast import List, Symbol, Value
+from ast import List, Symbol
 
 class Reader(object):
 
@@ -52,7 +52,7 @@ class Reader(object):
         while chars.peek() and self.ATOM.match(chars.peek()):
             token += chars.pop()
         if self.INTEGER.match(token):
-            return Value(int(token))
+            return int(token)
         else:
             return Symbol(token)
 

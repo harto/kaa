@@ -1,4 +1,4 @@
-from kaa.ast import Body, Def, Lambda, Let, LetBindings, List, Symbol, Value
+from kaa.ast import Body, Def, Lambda, Let, LetBindings, List, Symbol
 
 # AST-level transformations, e.g. parsing special forms
 

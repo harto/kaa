@@ -1,7 +1,8 @@
 import builtins
-from charbuf import CharBuffer, LineIterCharBuffer
-from compiler import compile
-from reader import Reader
+from kaa.charbuf import CharBuffer, LineIterCharBuffer
+from kaa.compiler import compile
+from kaa.evaluator import eval
+from kaa.reader import Reader
 
 class Runtime(object):
 
@@ -19,6 +20,6 @@ class Runtime(object):
     def eval(self, expressions):
         result = None
         for expr in expressions:
-            result = compile(expr).eval(self.ns)
+            result = eval(compile(expr), self.ns)
         self.ns[self.LAST_RESULT] = result
         return result

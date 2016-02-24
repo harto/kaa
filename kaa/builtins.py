@@ -1,21 +1,20 @@
-from ast import Func, Namespace, Value
+from ast import Namespace
 
 # todo: should be a macro
-def _assert(val):
-    assert val.get()
+def assert_(val):
+    assert val
 
-# todo: clean up boilerplate
-add = Func(lambda a, b: Value(a.get() + b.get()))
-equals = Func(lambda a, b: Value(a.get() == b.get()))
-multiply = Func(lambda a, b: Value(a.get() * b.get()))
-
-def pr(*xs):
+def print_(*xs):
     print(' '.join(map(str, xs)))
 
-# todo: build dynamically? using e.g. decorators
+# todo: clean up boilerplate
+add = lambda a, b: a + b
+eql = lambda a, b: a == b
+mul = lambda a, b: a * b
+
 def namespace():
     return Namespace({'+': add,
-                      '=': equals,
-                      '*': multiply,
-                      'assert': _assert,
-                      'print': pr})
+                      '=': eql,
+                      '*': mul,
+                      'assert': assert_,
+                      'print': print_})

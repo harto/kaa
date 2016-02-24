@@ -1,3 +1,5 @@
+from evaluator import eval
+
 class Namespace(object):
 
     def __init__(self, bindings = None, parent = None):
@@ -27,23 +29,18 @@ class Namespace(object):
         bindings.update(self.parent.bindings)
         return bindings
 
-class Expr(object):
-
-    def eval(self, ns):
-        return self
-
-class Body(Expr):
+class Body(object):
 
     def __init__(self, exprs = []):
         self.exprs = exprs
 
     def eval(self, ns):
-        result = Nil
+        result = None
         for expr in self.exprs:
-            result = expr.eval(ns)
+            result = eval(expr, ns)
         return result
 
-class Def(Expr):
+class Def(object):
 
     def __init__(self, symbol, value):
         self.symbol = symbol
@@ -52,17 +49,7 @@ class Def(Expr):
     def eval(self, ns):
         return self.symbol.bind(self.value, ns)
 
-# todo: replace this with some kind of Python-lambda interop syntax
-class Func(Expr):
-
-    def __init__(self, fn):
-        self.fn = fn
-
-    def __call__(self, *args):
-        result = self.fn(*args)
-        return result
-
-class Lambda(Expr):
+class Lambda(object):
 
     def __init__(self, param_names, body):
         self.param_names = param_names
@@ -76,7 +63,7 @@ class Lambda(Expr):
                            parent=ns)
         ns = Namespace(bindings=dict(zip(self.param_names, args)),
                        parent=ns)
-        return self.body.eval(ns)
+        return eval(self.body, ns)
 
     def _check_arity(self, args):
         num_expected = len(self.param_names)
@@ -100,14 +87,14 @@ class Lambda(Expr):
 
 class ArityException(Exception): pass
 
-class Let(Expr):
+class Let(object):
 
     def __init__(self, bindings, body):
         self.bindings = bindings
         self.body = body
 
     def eval(self, ns):
-        return self.body.eval(self.bindings.overlay_onto(ns))
+        return eval(self.body, self.bindings.overlay_onto(ns))
 
 class LetBindings(object):
 
@@ -120,10 +107,10 @@ class LetBindings(object):
     def overlay_onto(self, ns):
         ns = Namespace(parent=ns)
         for sym, val in self.pairs:
-            ns[sym.name] = val.eval(ns)
+            ns[sym.name] = eval(val, ns)
         return ns
 
-class List(Expr):
+class List(object):
 
     def __init__(self, members = None):
         self.members = members or []
@@ -144,15 +131,15 @@ class List(Expr):
     def eval(self, ns):
         if not self.members:
             return self
-        fn = self[0].eval(ns)
-        args = [expr.eval(ns) for expr in self[1:]]
+        fn = eval(self[0], ns)
+        args = [eval(expr, ns) for expr in self[1:]]
         # fixme: figure out consistent function call convention
         if isinstance(fn, Lambda):
             return fn(ns, *args)
         else:
             return fn(*args)
 
-class Symbol(Expr):
+class Symbol(object):
 
     def __init__(self, name):
         self.name = name
@@ -162,7 +149,7 @@ class Symbol(Expr):
             and other.name == self.name
 
     def bind(self, value, ns):
-        ns[self.name] = value.eval(ns)
+        ns[self.name] = eval(value, ns)
         return self.eval(ns)
 
     def eval(self, ns):
@@ -172,22 +159,5 @@ class Symbol(Expr):
             raise UnboundSymbolException(self.name)
 
 class UnboundSymbolException(Exception): pass
-
-class Value(Expr):
-
-    def __init__(self, value):
-        self.value = value
-
-    def __eq__(self, other):
-        return type(other) == type(self) \
-            and other.value == self.value
-
-    def __str__(self):
-        return str(self.value)
-
-    def get(self):
-        return self.value
-
-Nil = Value(None)
 
 from kaa import analyzer

@@ -1,4 +1,4 @@
-from kaa.ast import List, Value, Symbol
+from kaa.ast import List, Symbol
 from kaa.charbuf import CharBuffer
 from kaa.reader import Reader, UnbalancedDelimiterException, UnexpectedEofException
 from unittest import TestCase
@@ -6,7 +6,7 @@ from unittest import TestCase
 class ReaderTest(TestCase):
 
     def test_read_int(self):
-        self.assertEqual(Value(42), self._read_object('42'))
+        self.assertEqual(42, self._read_object('42'))
 
     def test_read_symbol(self):
         self.assertEqual(Symbol('foo-bar'), self._read_object('foo-bar'))
@@ -23,7 +23,7 @@ class ReaderTest(TestCase):
         obj = self._read_object('(foo 42 bar)')
         self.assertIsInstance(obj, List)
         self.assertEqual(obj[0], Symbol('foo'))
-        self.assertEqual(obj[1], Value(42))
+        self.assertEqual(obj[1], 42)
         self.assertEqual(obj[2], Symbol('bar'))
 
     def _read_object(self, s):

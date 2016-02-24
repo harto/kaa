@@ -1,4 +1,4 @@
-from kaa.ast import Def, Func, Lambda, Let, List, Symbol, Value
+from kaa.ast import Def, Lambda, Let, List, Symbol
 from kaa.compiler import CompilationException, compile
 from unittest import TestCase
 
@@ -9,18 +9,18 @@ class CompilerTest(TestCase):
         self.assertEqual(sym, self._compile(sym))
 
     def test_compile_list(self):
-        l = List([Symbol('foo'), Value('bar')])
+        l = List([Symbol('foo'), 'bar'])
         self.assertEqual(l.members, self._compile(l).members)
 
     def test_compile_def(self):
-        expr = List([Symbol('def'), Symbol('foo'), Value(42)])
+        expr = List([Symbol('def'), Symbol('foo'), 42])
         compiled = self._compile(expr)
         self.assertIsInstance(compiled, Def)
         self.assertEqual(Symbol('foo'), compiled.symbol)
-        self.assertEqual(Value(42), compiled.value)
+        self.assertEqual(42, compiled.value)
 
     def test_compile_invalid_def(self):
-        expr = List([Symbol('def'), Symbol('foo'), Value(42), Symbol('bar')])
+        expr = List([Symbol('def'), Symbol('foo'), 42, Symbol('bar')])
         self.assertRaises(CompilationException,
                           lambda: self._compile(expr))
 
@@ -31,17 +31,17 @@ class CompilerTest(TestCase):
         self.assertEqual(['foo'], compiled.param_names)
 
     def test_compile_invalid_lambda(self):
-        expr = List([Symbol('lambda'), List([Value(3)])])
+        expr = List([Symbol('lambda'), List([3])])
         self.assertRaises(CompilationException,
                           lambda: self._compile(expr))
 
     def test_compile_let(self):
         expr = List([Symbol('let'),
-                     List([Symbol('x'), Value(42)]),
+                     List([Symbol('x'), 42]),
                      List([Symbol('x')])])
         compiled = self._compile(expr)
         self.assertIsInstance(compiled, Let)
-        self.assertEqual([(Symbol('x'), Value(42))], compiled.bindings.pairs)
+        self.assertEqual([(Symbol('x'), 42)], compiled.bindings.pairs)
         self.assertEqual([List([Symbol('x')])], list(compiled.body.exprs))
 
     def _compile(self, expr):
