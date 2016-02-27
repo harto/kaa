@@ -2,7 +2,7 @@ import argparse
 from runtime import Runtime
 import sys
 
-if __name__ == '__main__':
+def boot():
 
     parser = argparse.ArgumentParser()
 
@@ -32,3 +32,6 @@ if __name__ == '__main__':
 
     else:
         runtime.eval_lines(sys.stdin)
+
+if __name__ == '__main__':
+    boot()

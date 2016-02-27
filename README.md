@@ -8,12 +8,20 @@ also sounds like the Australian pronunciation of
 [`car`](https://en.wikipedia.org/wiki/CAR_and_CDR).
 
 
+Installation
+------------
+
+```
+$ python setup.py develop
+```
+
+
 Usage
 -----
 
 ```
-$ python -m kaa.main                                # boot a REPL
-$ python -m kaa.main some-file.lisp                 # eval a source file
-$ python -m kaa.main --expression='(print (+ 1 2))' # eval a single expression
-$ echo '(print (+ 1 2)' | python -m kaa.main        # eval lines from stdin
+$ kaa                                # boot a REPL
+$ kaa some-file.lisp                 # eval a source file
+$ kaa --expression='(print (+ 1 2))' # eval a single expression
+$ echo '(print (+ 1 2)' | kaa        # eval lines from stdin
 ```
