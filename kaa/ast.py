@@ -36,7 +36,8 @@ class Def(object):
         self.value = value
 
     def eval(self, ns):
-        return self.symbol.bind(self.value, ns)
+        result = ns[self.symbol.name] = eval(self.value, ns)
+        return result
 
 class Lambda(object):
 
@@ -127,10 +128,6 @@ class Symbol(object):
     def __eq__(self, other):
         return type(other) == type(self) \
             and other.name == self.name
-
-    def bind(self, value, ns):
-        ns[self.name] = eval(value, ns)
-        return self.eval(ns)
 
     def eval(self, ns):
         try:
