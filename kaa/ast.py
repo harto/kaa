@@ -63,17 +63,10 @@ class Lambda(object):
                                                                num_received))
 
     def eval(self, ns):
-        self.capture_lexical_bindings(ns)
+        if self.lexical_bindings is None:
+            # could optimise this, e.g. don't capture if no free vars
+            self.lexical_bindings = ns
         return self
-
-    def capture_lexical_bindings(self, ns):
-        if self.lexical_bindings is not None:
-            return
-        self.lexical_bindings = {}
-        free_vars = analyzer.free_vars(self)
-        for name in free_vars:
-            if name in ns:
-                self.lexical_bindings[name] = ns[name]
 
 class ArityException(Exception): pass
 
