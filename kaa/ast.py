@@ -94,8 +94,9 @@ class Let(object):
 
 class List(object):
 
-    def __init__(self, members = None):
+    def __init__(self, members = None, source_meta = None):
         self.members = members or []
+        self.source_meta = source_meta
 
     def __eq__(self, other):
         return type(other) == type(self) \
@@ -122,8 +123,9 @@ class List(object):
 
 class Symbol(object):
 
-    def __init__(self, name):
+    def __init__(self, name, source_meta = None):
         self.name = name
+        self.source_meta = source_meta
 
     def __eq__(self, other):
         return type(other) == type(self) \
@@ -133,7 +135,8 @@ class Symbol(object):
         try:
             return ns[self.name]
         except KeyError:
-            raise UnboundSymbolException(self.name)
+            raise UnboundSymbolException(
+                '%s at %s' % (self.name, self.source_meta))
 
 class UnboundSymbolException(Exception): pass
 

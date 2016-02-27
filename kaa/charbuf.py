@@ -1,7 +1,11 @@
+# todo: fix source meta in repl
+# todo: consolidate different buffer types, including repl
+
 class CharBuffer(object):
 
     def __init__(self, s):
         self.s = s
+        self.line_num = 1
         self.col = 0
 
     def eof(self):
@@ -20,11 +24,14 @@ class CharBuffer(object):
         self.col += 1
         return c
 
+    def source_meta(self):
+        return SourceMeta(self.col - 1, self.line_num)
+
 class LineIterCharBuffer(object):
 
     def __init__(self, lines):
         self.lines = iter(lines)
-        self.line_num = 0
+        self.line_num = 1
         self.line = self._pop_line()
         self.next_line = self._pop_line()
 
@@ -59,4 +66,17 @@ class LineIterCharBuffer(object):
             return None
         return CharBuffer(line)
 
+    def source_meta(self):
+        line_meta = self.line.source_meta()
+        return SourceMeta(line_meta.col, self.line_num)
+
 class EmptyBufferException(Exception): pass
+
+class SourceMeta(object):
+
+    def __init__(self, col, line = None):
+        self.line = line
+        self.col = col
+
+    def __str__(self):
+        return 'line %s, column %s' % (self.line, self.col)

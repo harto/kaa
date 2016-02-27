@@ -1,5 +1,5 @@
 from kaa.ast import List, Symbol
-from kaa.charbuf import CharBuffer
+from kaa.charbuf import CharBuffer, LineIterCharBuffer
 from kaa.reader import Reader, UnbalancedDelimiterException, UnexpectedEofException
 from unittest import TestCase
 
@@ -25,6 +25,15 @@ class ReaderTest(TestCase):
         self.assertEqual(obj[0], Symbol('foo'))
         self.assertEqual(obj[1], 42)
         self.assertEqual(obj[2], Symbol('bar'))
+
+    def test_source_meta(self):
+        lines = LineIterCharBuffer(('(foo', '  (bar))'))
+        obj = next(Reader().read(lines))
+        self.assertEqual(1, obj.source_meta.line)
+        self.assertEqual(0, obj.source_meta.col)
+        obj = obj[1]
+        self.assertEqual(2, obj.source_meta.line)
+        self.assertEqual(2, obj.source_meta.col)
 
     def _read_object(self, s):
         return next(self._read(s))
