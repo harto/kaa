@@ -9,8 +9,8 @@ class CompilerTest(TestCase):
         self.assertEqual(sym, self._compile(sym))
 
     def test_compile_list(self):
-        l = List([Symbol('foo'), 'bar'])
-        self.assertEqual(l.members, self._compile(l).members)
+        L = List([Symbol('foo'), 'bar'])
+        self.assertEqual(L.members, self._compile(L).members)
 
     def test_compile_def(self):
         expr = List([Symbol('def'), Symbol('foo'), 42])

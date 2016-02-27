@@ -8,46 +8,46 @@ def compile(expr):
     else:
         return expr
 
-def _compile_list(l):
-    if not len(l):
-        return l
-    first = l[0]
+def _compile_list(L):
+    if not len(L):
+        return L
+    first = L[0]
     if first == Symbol('def'):
-        return _compile_def(l)
+        return _compile_def(L)
     elif first == Symbol('lambda'):
-        return _compile_lambda(l)
+        return _compile_lambda(L)
     elif first == Symbol('let'):
-        return _compile_let(l)
+        return _compile_let(L)
     else:
-        return List([compile(expr) for expr in l])
+        return List([compile(expr) for expr in L])
 
-def _compile_def(l):
+def _compile_def(L):
     try:
-        sym, val = l[1:]
+        sym, val = L[1:]
     except ValueError:
         sym = val = None
     if not isinstance(sym, Symbol):
         _err('def expects symbol, value')
     return Def(sym, compile(val))
 
-def _compile_lambda(l):
+def _compile_lambda(L):
     try:
-        params = l[1]
+        params = L[1]
     except IndexError:
         params = None
     if not isinstance(params, List):
         _err('lambda expects list of params as first arg')
     if not all(isinstance(p, Symbol) for p in params):
         _err('lambda params must be symbols')
-    body = [compile(expr) for expr in l[2:]]
+    body = [compile(expr) for expr in L[2:]]
     return Lambda([p.name for p in params], body)
 
-def _compile_let(l):
+def _compile_let(L):
     try:
-        first = l[1]
+        first = L[1]
     except IndexError:
         first = None
-    rest = l[2:]
+    rest = L[2:]
     bindings = _compile_let_bindings(first)
     body = [compile(expr) for expr in rest]
     return Let(bindings, body)

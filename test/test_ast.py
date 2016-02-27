@@ -41,12 +41,12 @@ class LetTest(TestCase):
 class ListTest(TestCase):
 
     def test_empty_list_evaluates_to_itself(self):
-        l = List()
-        self.assertEqual(l, eval(l, {}))
+        L = List()
+        self.assertEqual(L, eval(L, {}))
 
     def test_non_empty_list_evaluates_to_function_call(self):
-        l = List([lambda x: 'Hello, %s' % x, 'world'])
-        self.assertEqual('Hello, world', eval(l, {}))
+        L = List([lambda x: 'Hello, %s' % x, 'world'])
+        self.assertEqual('Hello, world', eval(L, {}))
 
 class SymbolTest(TestCase):
 

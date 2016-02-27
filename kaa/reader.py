@@ -38,14 +38,14 @@ class Reader(object):
                 yield self._read_atom(c, chars)
 
     def _read_list(self, chars):
-        l = List()
+        L = List()
         self.list_depth += 1
         for obj in self.read(chars):
             if obj == self.EOLIST:
                 break
-            l.append(obj)
+            L.append(obj)
         self.list_depth -= 1
-        return l
+        return L
 
     def _read_atom(self, first_char, chars):
         token = first_char
