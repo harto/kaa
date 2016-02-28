@@ -11,15 +11,12 @@ def compile(expr):
 def _compile_list(L):
     if not len(L):
         return L
-    first = L[0]
-    if first == Symbol('def'):
-        return _compile_def(L)
-    elif first == Symbol('lambda'):
-        return _compile_lambda(L)
-    elif first == Symbol('let'):
-        return _compile_let(L)
-    else:
+    try:
+        _compile_special_form = special_form_compilers[L[0]]
+    except KeyError:
+        # not a special form
         return List([compile(expr) for expr in L], L.source_meta)
+    return _compile_special_form(L)
 
 def _compile_def(L):
     try:
@@ -64,6 +61,12 @@ def _compile_let_bindings(bindings):
             _err('value must be bound to symbol', bindings.source_meta)
         compiled.append((sym.name, compile(val)))
     return compiled
+
+special_form_compilers = {
+    Symbol('def'): _compile_def,
+    Symbol('lambda'): _compile_lambda,
+    Symbol('let'): _compile_let,
+}
 
 def _err(msg, source_meta):
     if source_meta:

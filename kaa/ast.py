@@ -1,4 +1,4 @@
-from evaluator import eval, eval_all
+from kaa.evaluator import eval, eval_all
 
 class Namespace(object):
 
@@ -123,6 +123,9 @@ class Symbol(object):
     def __eq__(self, other):
         return type(other) == type(self) \
             and other.name == self.name
+
+    def __hash__(self):
+        return hash(self.name)
 
     def eval(self, ns):
         try:
