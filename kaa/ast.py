@@ -132,5 +132,3 @@ class Symbol(object):
                 '%s at %s' % (self.name, self.source_meta))
 
 class UnboundSymbolException(Exception): pass
-
-from kaa import analyzer
