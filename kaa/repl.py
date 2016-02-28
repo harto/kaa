@@ -39,4 +39,4 @@ class Repl(object):
                 # to flush out unexpected EOF
                 return list(Reader().read(buf))
             except UnexpectedEofException:
-                s += raw_input(self.PROMPT_2)
+                s += '\n' + raw_input(self.PROMPT_2)
