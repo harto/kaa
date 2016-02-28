@@ -1,5 +1,6 @@
-import re
 from ast import List, Symbol
+from collections import OrderedDict
+import re
 
 class Reader(object):
 
@@ -35,6 +36,8 @@ class Reader(object):
                 else:
                     yield self.EOLIST
                     break
+            elif c == '"':
+                yield self._read_string(chars)
             else:
                 yield self._read_atom(c, chars)
 
@@ -49,6 +52,34 @@ class Reader(object):
         self.list_depth -= 1
         return L
 
+    def _read_string(self, chars):
+        s = []
+        while chars.peek():
+            c = chars.pop()
+            if c == '"':
+                return ''.join(s)
+            elif c == '\\':
+                if not chars.peek():
+                    # EOF
+                    break
+                escape_sequence = c + chars.pop()
+                try:
+                    s.append(self.STRING_ESCAPE_SEQUENCES[escape_sequence])
+                except KeyError:
+                    raise InvalidEscapeSequence(escape_sequence)
+            else:
+                s.append(c)
+        raise UnexpectedEofException()
+
+    STRING_ESCAPE_SEQUENCES = OrderedDict((
+        # Order is important for formatting strings (e.g. in REPL); backslashes
+        # must be escaped first to avoid double escaping.
+        ('\\\\', '\\'),
+        ('\\"', '"'),
+        ('\\n', '\n'),
+        ('\\t', '\t'),
+    ))
+
     def _read_atom(self, first_char, chars):
         source_meta = chars.source_meta()
         token = first_char
@@ -59,5 +90,6 @@ class Reader(object):
         else:
             return Symbol(token, source_meta)
 
+class InvalidEscapeSequence(Exception): pass
 class UnbalancedDelimiterException(Exception): pass
 class UnexpectedEofException(Exception): pass

@@ -1,5 +1,6 @@
 from charbuf import CharBuffer
 from reader import Reader, UnexpectedEofException
+import re
 import traceback
 
 class Repl(object):
@@ -28,7 +29,7 @@ class Repl(object):
                 traceback.print_exc()
                 continue
             if result:
-                print(result)
+                print(self._format(result))
 
     def _read_exprs(self):
         s = raw_input(self.PROMPT_1)
@@ -40,3 +41,14 @@ class Repl(object):
                 return list(Reader().read(buf))
             except UnexpectedEofException:
                 s += '\n' + raw_input(self.PROMPT_2)
+
+    def _format(self, value):
+        if isinstance(value, str):
+            return format_str(value)
+        else:
+            return value
+
+def format_str(s):
+    for k, v in Reader.STRING_ESCAPE_SEQUENCES.items():
+        s = s.replace(v, k)
+    return '"%s"' % s
