@@ -1,4 +1,4 @@
-from kaa.evaluator import eval, eval_all
+from kaa.evaluator import eval
 
 class Namespace(object):
 

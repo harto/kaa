@@ -1,5 +1,11 @@
-from kaa.evaluator import eval, eval_all
+from kaa.evaluator import eval
 from kaa.types import Namespace
+
+def eval_all(exprs, ns):
+    result = None
+    for e in exprs:
+        result = eval(e, ns)
+        return result
 
 class Def(object):
 
