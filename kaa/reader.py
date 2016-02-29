@@ -87,6 +87,8 @@ class Reader(object):
             token += chars.pop()
         if self.INTEGER.match(token):
             return int(token)
+        elif token.startswith('py/'):
+            return eval(token[3:])
         else:
             return Symbol(token, source_meta)
 

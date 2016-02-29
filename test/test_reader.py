@@ -40,6 +40,10 @@ class ReaderTest(TestCase):
         self.assertEqual(obj[1], 42)
         self.assertEqual(obj[2], Symbol('bar'))
 
+    def test_read_python_builtin(self):
+        obj = self._read_object('py/Exception')
+        self.assertEqual(Exception, obj)
+
     def test_source_meta(self):
         lines = LineIterCharBuffer(('(foo', '  (bar))'))
         obj = next(Reader().read(lines))
