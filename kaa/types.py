@@ -45,6 +45,9 @@ class List(object):
     def __len__(self):
         return len(self.members)
 
+    def __str__(self):
+        return '(%s)' % ' '.join(map(str, self.members))
+
     def append(self, x):
         self.members.append(x)
 
@@ -70,6 +73,9 @@ class Symbol(object):
 
     def __hash__(self):
         return hash(self.name)
+
+    def __str__(self):
+        return self.name
 
     def eval(self, ns):
         try:
