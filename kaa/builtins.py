@@ -1,4 +1,4 @@
-from ast import Namespace
+from kaa.types import Namespace
 
 # todo: should be a macro
 def assert_(val):

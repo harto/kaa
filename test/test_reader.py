@@ -1,6 +1,6 @@
-from kaa.ast import List, Symbol
 from kaa.charbuf import CharBuffer, LineIterCharBuffer
 from kaa.reader import *
+from kaa.types import List, Symbol
 from unittest import TestCase
 
 class ReaderTest(TestCase):

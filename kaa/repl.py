@@ -1,5 +1,5 @@
-from charbuf import CharBuffer
-from reader import Reader, UnexpectedEofException
+from kaa.charbuf import CharBuffer
+from kaa.reader import Reader, UnexpectedEofException
 import re
 import traceback
 

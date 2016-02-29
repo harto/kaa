@@ -1,5 +1,5 @@
-from unittest import TestCase
 from kaa.charbuf import CharBuffer, EmptyBufferException, LineIterCharBuffer
+from unittest import TestCase
 
 class CharBufferTest(TestCase):
 

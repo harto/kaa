@@ -1,4 +1,4 @@
-from kaa.ast import List, Symbol
+from kaa.types import List, Symbol
 from kaa.special_forms import Def, Lambda, Let
 
 # AST-level transformations, e.g. parsing special forms

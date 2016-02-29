@@ -1,5 +1,5 @@
+from kaa.runtime import Runtime
 import argparse
-from runtime import Runtime
 import sys
 
 def boot():

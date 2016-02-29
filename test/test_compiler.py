@@ -1,6 +1,6 @@
-from kaa.ast import List, Symbol
 from kaa.compiler import CompilationException, compile
 from kaa.special_forms import Def, Lambda, Let
+from kaa.types import List, Symbol
 from unittest import TestCase
 
 class CompilerTest(TestCase):

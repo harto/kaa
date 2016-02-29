@@ -1,5 +1,5 @@
-from kaa.ast import *
 from kaa.evaluator import eval
+from kaa.types import *
 from unittest import TestCase
 
 class ListTest(TestCase):

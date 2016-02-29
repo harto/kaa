@@ -1,4 +1,4 @@
-import builtins
+from kaa import builtins
 from kaa.charbuf import CharBuffer, LineIterCharBuffer
 from kaa.compiler import compile
 from kaa.evaluator import eval

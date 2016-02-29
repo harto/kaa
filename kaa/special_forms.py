@@ -1,5 +1,5 @@
-from kaa.ast import Namespace
 from kaa.evaluator import eval, eval_all
+from kaa.types import Namespace
 
 class Def(object):
 

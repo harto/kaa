@@ -1,4 +1,4 @@
-from ast import List, Symbol
+from kaa.types import List, Symbol
 from collections import OrderedDict
 import re
 
