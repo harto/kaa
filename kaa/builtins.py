@@ -1,8 +1,11 @@
-from kaa.types import Namespace
+from kaa.types import List, Namespace
 
 # todo: should be a macro
 def assert_(val):
     assert val
+
+def list_(*xs):
+    return List(xs)
 
 def print_(*xs):
     print(' '.join(map(str, xs)))
@@ -16,4 +19,5 @@ def namespace():
                       '=': eql,
                       '*': mul,
                       'assert': assert_,
+                      'list': list_,
                       'print': print_})
