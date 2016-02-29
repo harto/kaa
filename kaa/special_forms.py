@@ -55,6 +55,17 @@ class Let(object):
             ns[name] = eval(expr, ns)
         return ns
 
+class Raise(object):
+
+    def __init__(self, exception):
+        self.exception = exception
+
+    def eval(self, ns):
+        if isinstance(self.exception, str):
+            raise Exception(self.exception)
+        else:
+            raise eval(self.exception, ns)
+
 class Quote(object):
 
     def __init__(self, quoted):

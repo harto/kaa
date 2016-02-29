@@ -32,6 +32,15 @@ class LetTest(TestCase):
         ns = Namespace({'x': 5})
         self.assertEqual(42, let.eval(ns))
 
+class RaiseTest(TestCase):
+
+    def test_raises_exception(self):
+        class ExampleException(Exception): pass
+        r = Raise(ExampleException('oh no'))
+        self.assertRaises(ExampleException, lambda: r.eval(Namespace()))
+        r = Raise('oh no')
+        self.assertRaises(Exception, lambda: r.eval(Namespace()))
+
 class QuoteTest(TestCase):
 
     def test_quoted_form_not_evaluated(self):

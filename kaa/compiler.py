@@ -1,5 +1,5 @@
 from kaa.types import List, Symbol
-from kaa.special_forms import Def, Lambda, Let, Quote
+from kaa.special_forms import Def, Lambda, Let, Raise, Quote
 
 # AST-level transformations, e.g. parsing special forms
 
@@ -63,6 +63,13 @@ def _compile_let_bindings(bindings):
         compiled.append((sym.name, compile(val)))
     return compiled
 
+def _compile_raise(L):
+    try:
+        exception = L[1]
+    except IndexError:
+        _err('raise takes one arg', L.source_meta)
+    return Raise(exception)
+
 def _compile_quote(L):
     # Short-circuit compilation
     if len(L) != 2:
@@ -73,6 +80,7 @@ special_form_compilers = {
     Symbol('def'): _compile_def,
     Symbol('lambda'): _compile_lambda,
     Symbol('let'): _compile_let,
+    Symbol('raise'): _compile_raise,
     Symbol('quote'): _compile_quote,
 }
 
