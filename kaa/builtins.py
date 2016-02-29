@@ -8,7 +8,10 @@ def list_(*xs):
     return List(xs)
 
 def print_(*xs):
-    print(' '.join(map(str, xs)))
+    print(str_(*xs))
+
+def str_(*xs):
+    return ' '.join(map(str, xs))
 
 add = lambda a, b: a + b
 eql = lambda a, b: a == b
@@ -20,4 +23,5 @@ def namespace():
                       '*': mul,
                       'assert': assert_,
                       'list': list_,
-                      'print': print_})
+                      'print': print_,
+                      'str': str_})
