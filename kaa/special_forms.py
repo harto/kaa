@@ -55,4 +55,12 @@ class Let(object):
             ns[name] = eval(expr, ns)
         return ns
 
+class Quote(object):
+
+    def __init__(self, quoted):
+        self.quoted = quoted
+
+    def eval(self, _):
+        return self.quoted
+
 class ArityException(Exception): pass

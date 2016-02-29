@@ -32,3 +32,10 @@ class LetTest(TestCase):
                   [Symbol('x')])
         ns = Namespace({'x': 5})
         self.assertEqual(42, eval(let, ns))
+
+class QuoteTest(TestCase):
+
+    def test_quoted_form_not_evaluated(self):
+        expr = List([Symbol('foo')])
+        quote = Quote(expr)
+        self.assertEqual(expr, eval(quote, Namespace()))
