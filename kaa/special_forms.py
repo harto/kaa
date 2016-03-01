@@ -34,11 +34,7 @@ class Lambda(object):
         return eval_all(self.body, ns)
 
     def _check_arity(self, args):
-        num_expected = len(self.param_names)
-        num_received = len(args)
-        if num_received != num_expected:
-            raise ArityException('expected %d args, got %d' % (num_expected,
-                                                               num_received))
+        _check_arity(self.param_names, args)
 
     def eval(self, ns):
         if self.lexical_bindings is None:
@@ -61,6 +57,20 @@ class Let(object):
             ns[name] = eval(expr, ns)
         return ns
 
+class Macro(object):
+
+    def __init__(self, params, body):
+        self.params = params
+        self.body = body
+
+    def __call__(self, ns, *args):
+        _check_arity(self.params, args)
+        ns = Namespace(bindings=self._locals(args), parent=ns)
+        return eval_all(self.body, ns)
+
+    def _locals(self, args):
+        return dict(zip([sym.name for sym in self.params], args))
+
 class Raise(object):
 
     def __init__(self, exception):
@@ -79,5 +89,13 @@ class Quote(object):
 
     def eval(self, _):
         return self.quoted
+
+def _check_arity(params, args):
+    num_expected = len(params)
+    num_received = len(args)
+    if num_received != num_expected:
+        raise ArityException('expected %d args, got %d' % (num_expected,
+                                                           num_received))
+
 
 class ArityException(Exception): pass

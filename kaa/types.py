@@ -55,7 +55,11 @@ class List(object):
         if not self.members:
             return self
         fn = eval(self[0], ns)
-        args = [eval(expr, ns) for expr in self[1:]]
+        rest = self[1:]
+        # xxx: is this the right place for this?
+        if isinstance(fn, Macro):
+            return fn(ns, *rest)
+        args = [eval(expr, ns) for expr in rest]
         if isinstance(fn, Lambda):
             return fn(ns, *args)
         else:
@@ -86,4 +90,4 @@ class Symbol(object):
 
 class UnboundSymbolException(Exception): pass
 
-from kaa.special_forms import Lambda
+from kaa.special_forms import Lambda, Macro

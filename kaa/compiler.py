@@ -1,5 +1,5 @@
 from kaa.types import List, Symbol
-from kaa.special_forms import Def, Lambda, Let, Raise, Quote
+from kaa.special_forms import Def, Lambda, Let, Macro, Raise, Quote
 
 # AST-level transformations, e.g. parsing special forms
 
@@ -24,21 +24,38 @@ def _compile_def(L):
         sym, val = L[1:]
     except ValueError:
         sym = val = None
-    if not isinstance(sym, Symbol):
-        _err('def expects symbol, value', L.source_meta)
+    if not _is_symbol(sym):
+        _err('invalid def form', L.source_meta)
     return Def(sym, compile(val))
+
+def _compile_defmacro(L):
+    try:
+        name = L[1]
+        params = L[2]
+    except IndexError:
+        name = params = None
+    if not _is_symbol(name):
+        _err('invalid macro name', L.source_meta)
+    if not _is_valid_param_list(params):
+        _err('invalid macro params', L.source_meta)
+    body = [compile(expr) for expr in L[3:]]
+    return Def(name, Macro(params, body))
 
 def _compile_lambda(L):
     try:
         params = L[1]
     except IndexError:
         params = None
-    if not isinstance(params, List):
-        _err('lambda expects list of params as first arg', L.source_meta)
-    if not all(isinstance(p, Symbol) for p in params):
-        _err('lambda params must be symbols', params.source_meta)
+    if not _is_valid_param_list(params):
+        _err('invalid lambda params', L.source_meta)
     body = [compile(expr) for expr in L[2:]]
     return Lambda([p.name for p in params], body)
+
+def _is_symbol(x):
+    return isinstance(x, Symbol)
+
+def _is_valid_param_list(params):
+    return isinstance(params, List) and all(_is_symbol(p) for p in params)
 
 def _compile_let(L):
     try:
@@ -58,7 +75,7 @@ def _compile_let_bindings(bindings):
     pairs = zip(*(iter(bindings),) * 2)
     compiled = []
     for sym, val in pairs:
-        if not isinstance(sym, Symbol):
+        if not _is_symbol(sym):
             _err('value must be bound to symbol', bindings.source_meta)
         compiled.append((sym.name, compile(val)))
     return compiled
@@ -78,6 +95,7 @@ def _compile_quote(L):
 
 special_form_compilers = {
     Symbol('def'): _compile_def,
+    Symbol('defmacro'): _compile_defmacro,
     Symbol('lambda'): _compile_lambda,
     Symbol('let'): _compile_let,
     Symbol('raise'): _compile_raise,

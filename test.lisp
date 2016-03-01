@@ -39,4 +39,8 @@
 (def x 4)
 (assert (= 4 (get-x)))
 
-;(assert (= 1 2))
+(defmacro assert (assertion)
+  (quasiquote (if (not (unquote assertion))
+                  (raise (py/AssertionError (str (quote (unquote assertion))))))))
+
+(assert (= 1 2))
