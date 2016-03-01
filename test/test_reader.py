@@ -33,6 +33,10 @@ class ReaderTest(TestCase):
         self.assertRaises(UnbalancedDelimiterException,
                           lambda: self._read_object(")"))
 
+    def test_read_empty_list(self):
+        obj = self._read_object('()')
+        self.assertIsInstance(obj, List)
+
     def test_read_list(self):
         obj = self._read_object('(foo 42 bar)')
         self.assertIsInstance(obj, List)

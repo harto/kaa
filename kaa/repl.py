@@ -28,7 +28,7 @@ class Repl(object):
                 # todo: filter internal stack frames
                 traceback.print_exc()
                 continue
-            if result:
+            if result is not None:
                 print(self._format(result))
 
     def _read_exprs(self):
