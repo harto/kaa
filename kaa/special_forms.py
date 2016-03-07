@@ -17,6 +17,21 @@ class Def(object):
         result = ns[self.symbol.name] = eval(self.value, ns)
         return result
 
+class If(object):
+
+    def __init__(self, cond, then, else_):
+        self.cond = cond
+        self.then = then
+        self.else_ = else_
+
+    def eval(self, ns):
+        if eval(self.cond, ns):
+            return eval(self.then, ns)
+        elif self.else_:
+            return eval(self.else_, ns)
+        else:
+            return None
+
 class Lambda(object):
 
     def __init__(self, param_names, body):

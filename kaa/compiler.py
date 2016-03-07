@@ -1,5 +1,5 @@
 from kaa.types import List, Symbol
-from kaa.special_forms import Def, Lambda, Let, Macro, Raise, Quote
+from kaa.special_forms import Def, If, Lambda, Let, Macro, Raise, Quote
 
 # AST-level transformations, e.g. parsing special forms
 
@@ -40,6 +40,17 @@ def _compile_defmacro(L):
         _err('invalid macro params', L.source_meta)
     body = [compile(expr) for expr in L[3:]]
     return Def(name, Macro(params, body))
+
+def _compile_if(L):
+    if len(L) not in (3, 4):
+        _err('invalid if form', L.source_meta)
+    cond = L[1]
+    then = L[2]
+    try:
+        else_ = L[3]
+    except IndexError:
+        else_ = None
+    return If(cond, then, else_)
 
 def _compile_lambda(L):
     try:
@@ -96,6 +107,7 @@ def _compile_quote(L):
 special_form_compilers = {
     Symbol('def'): _compile_def,
     Symbol('defmacro'): _compile_defmacro,
+    Symbol('if'): _compile_if,
     Symbol('lambda'): _compile_lambda,
     Symbol('let'): _compile_let,
     Symbol('raise'): _compile_raise,

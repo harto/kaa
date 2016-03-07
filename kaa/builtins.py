@@ -18,7 +18,10 @@ eql = lambda a, b: a == b
 mul = lambda a, b: a * b
 
 def namespace():
-    return Namespace({'+': add,
+    return Namespace({'True': True,
+                      'False': False,
+                      'None': None,
+                      '+': add,
                       '=': eql,
                       '*': mul,
                       'assert': assert_,
