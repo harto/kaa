@@ -12,7 +12,8 @@ def _invoke(L, ns):
     rest = L[1:]
 
     if isinstance(first, Macro):
-        return first(ns, *rest)
+        expansion = first(ns, *rest)
+        return eval(expansion, ns)
 
     args = [eval(expr, ns) for expr in rest]
     if isinstance(first, Lambda):
