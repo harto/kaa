@@ -22,8 +22,5 @@ class Runtime(object):
         return result
 
     def eval(self, expr):
-        self.ns[self.LAST_RESULT] = result = eval(expr, self.ns)
+        self.ns[self.LAST_RESULT] = result = evaluator.eval(expr, self.ns)
         return result
-
-def eval(expr, ns):
-    return evaluator.eval(expr, ns)
