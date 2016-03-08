@@ -47,6 +47,7 @@ def special_form_handler(sym):
             Symbol('lambda'): Lambda.create,
             Symbol('let'): Let.create,
             Symbol('raise'): Raise.create,
+            Symbol('quasiquote'): Quasiquote.create,
             Symbol('quote'): Quote.create,
         }
     return _special_form_handlers[sym]

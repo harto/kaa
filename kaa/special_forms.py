@@ -176,6 +176,32 @@ class Raise(object):
         else:
             raise eval(self.exception, ns)
 
+class Quasiquote(object):
+
+    @classmethod
+    def create(cls, L):
+        if len(L) != 2:
+            _err('quasiquote takes one arg', L.source_meta)
+        return cls(L[1])
+
+    def __init__(self, quoted):
+        self.quoted = quoted
+
+    def eval(self, ns):
+        return self.eval_unquotes(self.quoted, ns)
+
+    def eval_unquotes(self, expr, ns):
+        if not (isinstance(expr, List) and len(expr)):
+            return expr
+        first = expr[0]
+        if first == Symbol('unquote'):
+            if len(expr) != 2:
+                _err('unquote takes one arg', expr.source_meta)
+            second = expr[1]
+            return eval(second, ns)
+        else:
+            return List([self.eval_unquotes(e, ns) for e in expr])
+
 class Quote(object):
 
     @classmethod
