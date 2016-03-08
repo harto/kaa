@@ -15,7 +15,7 @@ class Repl(object):
         while True:
             try:
                 exprs = self._read_exprs()
-                result = self.runtime.eval(exprs)
+                result = self.runtime.eval_all(exprs)
             except KeyboardInterrupt:
                 # Ctrl-C; user wants to abandon current input
                 print
