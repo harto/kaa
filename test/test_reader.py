@@ -11,17 +11,6 @@ class ReaderTest(TestCase):
     def test_read_string(self):
         self.assertEqual("hello", self._read_object('"hello"'))
 
-    def test_read_unterminated_string(self):
-        self.assertRaises(UnexpectedEofException,
-                          lambda: self._read_object('"hello'))
-
-    def test_read_string_with_escaped_quotes(self):
-        self.assertEqual('"hello"', self._read_object('"\\"hello\\""'))
-
-    def test_read_string_with_invalid_escape_sequence(self):
-        self.assertRaises(InvalidEscapeSequence,
-                          lambda: self._read_object('"h\\ello"'))
-
     def test_read_symbol(self):
         self.assertEqual(Symbol('foo-bar'), self._read_object('foo-bar'))
 

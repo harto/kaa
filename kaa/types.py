@@ -1,3 +1,5 @@
+from kaa import formatter
+
 class Namespace(object):
 
     def __init__(self, bindings = None, parent = None):
@@ -44,7 +46,7 @@ class List(object):
         return len(self.members)
 
     def __str__(self):
-        return '(%s)' % ' '.join(map(str, self.members))
+        return '(%s)' % ' '.join(map(formatter.format, self.members))
 
     def append(self, x):
         self.members.append(x)
