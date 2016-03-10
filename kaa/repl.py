@@ -38,7 +38,7 @@ class Repl(object):
             try:
                 # eagerly evaluate the expression generator
                 # to flush out unexpected EOF
-                return list(Reader().read(buf))
+                return list(Reader().read_all(buf))
             except UnexpectedEofException:
                 s += '\n' + raw_input(self.PROMPT_2)
 

@@ -10,10 +10,10 @@ class Runtime(object):
         self.ns = builtins.namespace()
 
     def eval_lines(self, lines):
-        return self.eval_all(Reader().read(LineIterCharBuffer(lines)))
+        return self.eval_all(Reader().read_all(LineIterCharBuffer(lines)))
 
     def eval_string(self, s):
-        return self.eval_all(Reader().read(CharBuffer(s)))
+        return self.eval_all(Reader().read_all(CharBuffer(s)))
 
     def eval_all(self, exprs):
         result = None

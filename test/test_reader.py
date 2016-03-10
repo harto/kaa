@@ -50,7 +50,7 @@ class ReaderTest(TestCase):
 
     def test_source_meta(self):
         lines = LineIterCharBuffer(('(foo', '  (bar))'))
-        obj = next(Reader().read(lines))
+        obj = Reader().read(lines)
         self.assertEqual(1, obj.source_meta.line)
         self.assertEqual(0, obj.source_meta.col)
         obj = obj[1]
@@ -58,7 +58,4 @@ class ReaderTest(TestCase):
         self.assertEqual(2, obj.source_meta.col)
 
     def _read_object(self, s):
-        return next(self._read(s))
-
-    def _read(self, s):
         return Reader().read(CharBuffer(s))
