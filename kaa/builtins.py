@@ -1,9 +1,5 @@
 from kaa.types import List, Namespace
 
-# todo: should be a macro
-def assert_(val):
-    assert val
-
 def list_(*xs):
     return List(xs)
 
@@ -27,7 +23,6 @@ def namespace():
                       '+': add,
                       '=': eql,
                       '*': mul,
-                      'assert': assert_,
                       'list': list_,
                       'not': not_,
                       'print': print_,
