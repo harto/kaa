@@ -7,6 +7,9 @@ def assert_(val):
 def list_(*xs):
     return List(xs)
 
+def not_(val):
+    return not val
+
 def print_(*xs):
     print(str_(*xs))
 
@@ -26,5 +29,6 @@ def namespace():
                       '*': mul,
                       'assert': assert_,
                       'list': list_,
+                      'not': not_,
                       'print': print_,
                       'str': str_})
