@@ -33,6 +33,12 @@ class Reader(object):
             while chars.peek():
                 chars.pop()
             return self.read(chars)
+        elif c == "'":
+            return List([Symbol('quote'), self.read(chars)])
+        elif c == '`':
+            return List([Symbol('quasiquote'), self.read(chars)])
+        elif c == '~':
+            return List([Symbol('unquote'), self.read(chars)])
         elif c == '(':
             return self._read_list(chars)
         elif c == ')':
