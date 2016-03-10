@@ -49,6 +49,7 @@ def special_form_handler(sym):
             Symbol('raise'): Raise.create,
             Symbol('quasiquote'): Quasiquote.create,
             Symbol('quote'): Quote.create,
+            Symbol('try'): Try.create,
         }
     return _special_form_handlers[sym]
 

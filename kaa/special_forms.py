@@ -1,4 +1,5 @@
 from kaa.types import Namespace, List, Symbol
+import sys
 
 def eval_all(exprs, ns):
     result = None
@@ -215,6 +216,37 @@ class Quote(object):
 
     def eval(self, _):
         return self.quoted
+
+class Try(object):
+
+    @classmethod
+    def create(cls, L):
+        if len(L) != 3:
+            _err('invalid try-except form', L.source_meta)
+        expr = L[1]
+        handlers = [cls._parse_handler(except_) for except_ in L[2:]]
+        return cls(expr, handlers)
+
+    @classmethod
+    def _parse_handler(cls, L):
+        if not (isinstance(L, List) and len(L) == 3 and L[0] == Symbol('except')):
+            _err('invalid except form', L.source_meta)
+        return L[1:3]
+
+    def __init__(self, expr, handlers):
+        self.expr = expr
+        self.handlers = handlers
+
+    def eval(self, ns):
+        try:
+            return eval(self.expr, ns)
+        except:
+            ex = sys.exc_info()[1]
+            for ex_type_expr, handler in self.handlers:
+                ex_type = eval(ex_type_expr, ns)
+                if isinstance(ex, ex_type):
+                    return eval(handler, ns)
+            raise
 
 def _is_symbol(x):
     return isinstance(x, Symbol)

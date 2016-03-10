@@ -43,4 +43,12 @@
   `(if (not ~assertion)
        (raise (py/AssertionError (str '~assertion)))))
 
-(assert (= 1 2))
+;; (defmacro do (& exprs)
+;;   `((lambda () ~@exprs)))
+
+;; (try (do (assert (= 1 2))
+;;          (raise "oops, shouldn't be here"))
+;;      (except py/AssertionError None))
+
+(try (raise "oops")
+     (except py/Exception None))
