@@ -29,7 +29,6 @@ class LambdaTest(TestCase):
         expr = List([Symbol('lambda'), List([Symbol('foo')])])
         obj = Lambda.create(expr)
         self.assertIsInstance(obj, Lambda)
-        self.assertEqual(['foo'], obj.param_names)
 
     def test_create_invalid(self):
         expr = List([Symbol('lambda'), List([3])])
@@ -37,14 +36,15 @@ class LambdaTest(TestCase):
                           lambda: Lambda.create(expr))
 
     def test_call_produces_expected_result(self):
-        lam = Lambda(['x', 'y'],
-                     [List([lambda a, b: a + b,
-                            Symbol('x'),
-                            Symbol('y')])])
+        lam = Lambda.create(List([Symbol('lambda'),
+                                  List([Symbol('x'), Symbol('y')]),
+                                  List([lambda a, b: a + b,
+                                        Symbol('x'),
+                                        Symbol('y')])]))
         self.assertEqual(3, lam(Namespace(), 1, 2))
 
     def test_call_with_invalid_arity(self):
-        lam = Lambda([], [])
+        lam = Lambda.create(List([Symbol('lambda'), List([])]))
         self.assertRaises(ArityException, lambda: lam(Namespace(), 'foo'))
 
 class LetTest(TestCase):

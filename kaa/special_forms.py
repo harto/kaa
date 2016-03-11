@@ -1,4 +1,5 @@
 from kaa.types import Namespace, List, Symbol
+import itertools
 import sys
 
 def eval_all(exprs, ns):
@@ -59,36 +60,82 @@ class Lambda(object):
     @classmethod
     def create(cls, L):
         try:
-            params = L[1]
+            params = Params.parse(L[1])
         except IndexError:
-            params = None
-        if not _is_valid_param_list(params):
-            _err('invalid lambda params', L.source_meta)
+            _err('missing params list', L.source_meta)
         body = L[2:]
-        return cls([p.name for p in params], body)
+        return cls(params, body)
 
-    def __init__(self, param_names, body):
-        self.param_names = param_names
+    def __init__(self, params, body):
+        self.params = params
         self.body = body
         self.lexical_bindings = None
 
     def __call__(self, ns, *args):
-        self._check_arity(args)
         if self.lexical_bindings:
             ns = Namespace(bindings=self.lexical_bindings,
                            parent=ns)
-        ns = Namespace(bindings=dict(zip(self.param_names, args)),
+        ns = Namespace(bindings=self.params.bind(args),
                        parent=ns)
         return eval_all(self.body, ns)
-
-    def _check_arity(self, args):
-        _check_arity(self.param_names, args)
 
     def eval(self, ns):
         if self.lexical_bindings is None:
             # could optimise this, e.g. don't capture if no free vars
             self.lexical_bindings = ns
         return self
+
+class Params(object):
+
+    @classmethod
+    def parse(cls, L):
+        if not (isinstance(L, List) and all(_is_symbol(p) for p in L)):
+            _err('invalid params', L.source_meta)
+        positional_names = [sym.name for sym in cls._parse_positional(L)]
+        rest = cls._parse_rest(L)
+        rest_name = rest and rest.name or None
+        return cls(positional_names, rest_name)
+
+    @classmethod
+    def _parse_positional(cls, L):
+        return list(itertools.takewhile(lambda s: s != Symbol('&'), L))
+
+    @classmethod
+    def _parse_rest(cls, L):
+        decl = list(itertools.dropwhile(lambda s: s != Symbol('&'), L))
+        if len(decl) not in (0, 2):
+            _err('invalid rest declaration', L.source_meta)
+        try:
+            return decl[1]
+        except IndexError:
+            return None
+
+    def __init__(self, positional_names, rest_name = None):
+        self.positional_names = positional_names
+        self.rest_name = rest_name
+        self.arity = len(positional_names)
+
+    def bind(self, args):
+        self._check_arity(args)
+        bound = dict(zip([name for name in self.positional_names], args))
+        if self.rest_name:
+            bound[self.rest_name] = List(args[len(self.positional_names):])
+        return bound
+
+    def arity(self):
+        min_allowed = len(self.positional_names)
+        if self.rest_name:
+            max_allowed = None
+        else:
+            max_allowed = min_allowed
+        return (min_allowed, max_allowed)
+
+    def _check_arity(self, args):
+        received = len(args)
+        if received < self.arity or (received > self.arity and not self.rest_name):
+            expected = str(self.arity)
+            if self.rest_name: expected += '+'
+            raise ArityException('expected %s args, got %d' % (expected, received))
 
 # todo: replace with macro
 class Let(object):
@@ -136,13 +183,11 @@ class Macro(object):
     def define(cls, L):
         try:
             name = L[1]
-            params = L[2]
+            params = Params.parse(L[2])
         except IndexError:
-            name = params = None
+            _err('invalid macro definition', L.source_meta)
         if not _is_symbol(name):
-            _err('invalid macro name', L.source_meta)
-        if not _is_valid_param_list(params):
-            _err('invalid macro params', L.source_meta)
+            _err('invalid macro name', name.source_meta)
         body = L[3:]
         return Def(name, cls(params, body))
 
@@ -151,12 +196,8 @@ class Macro(object):
         self.body = body
 
     def __call__(self, ns, *args):
-        _check_arity(self.params, args)
-        ns = Namespace(bindings=self._locals(args), parent=ns)
+        ns = Namespace(bindings=self.params.bind(args), parent=ns)
         return eval_all(self.body, ns)
-
-    def _locals(self, args):
-        return dict(zip([sym.name for sym in self.params], args))
 
 class Raise(object):
 
@@ -251,16 +292,7 @@ class Try(object):
 def _is_symbol(x):
     return isinstance(x, Symbol)
 
-def _is_valid_param_list(params):
-    return isinstance(params, List) and all(_is_symbol(p) for p in params)
-
-def _check_arity(params, args):
-    num_expected = len(params)
-    num_received = len(args)
-    if num_received != num_expected:
-        raise ArityException('expected %d args, got %d' % (num_expected,
-                                                           num_received))
-def _err(msg, source_meta):
+def _err(msg, source_meta = None):
     if source_meta:
         msg += ' (%s)' % source_meta
     raise CompilationException(msg)
