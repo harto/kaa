@@ -1,4 +1,4 @@
-from kaa.types import Namespace, List, Symbol
+from kaa.types import List, Symbol
 import itertools
 import sys
 
@@ -73,10 +73,8 @@ class Lambda(object):
 
     def __call__(self, ns, *args):
         if self.lexical_bindings:
-            ns = Namespace(bindings=self.lexical_bindings,
-                           parent=ns)
-        ns = Namespace(bindings=self.params.bind(args),
-                       parent=ns)
+            ns = ns.push(self.lexical_bindings)
+        ns = ns.push(self.params.bind(args))
         return eval_all(self.body, ns)
 
     def eval(self, ns):
@@ -172,7 +170,7 @@ class Let(object):
         return eval_all(self.body, self.with_bindings(ns))
 
     def with_bindings(self, ns):
-        ns = Namespace(parent=ns)
+        ns = ns.push()
         for name, expr in self.bindings:
             ns[name] = eval(expr, ns)
         return ns
@@ -196,8 +194,7 @@ class Macro(object):
         self.body = body
 
     def __call__(self, ns, *args):
-        ns = Namespace(bindings=self.params.bind(args), parent=ns)
-        return eval_all(self.body, ns)
+        return eval_all(self.body, ns.push(self.params.bind(args)))
 
 class Raise(object):
 

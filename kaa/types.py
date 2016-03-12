@@ -22,12 +22,8 @@ class Namespace(object):
     def __setitem__(self, k, v):
         self.bindings[k] = v
 
-    def flatten(self):
-        if self.parent is None:
-            return self.bindings
-        bindings = self.bindings.copy()
-        bindings.update(self.parent.bindings)
-        return bindings
+    def push(self, bindings = None):
+        return Namespace(bindings=bindings, parent=self)
 
 class List(object):
 
