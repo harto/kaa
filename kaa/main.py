@@ -23,8 +23,7 @@ def boot():
 
     elif args.paths:
         for path in args.paths:
-            with open(path) as f:
-                runtime.eval_lines(f)
+            runtime.eval_file(path)
 
     elif sys.stdin.isatty():
         from repl import Repl

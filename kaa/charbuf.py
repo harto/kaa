@@ -80,13 +80,25 @@ class LineIterCharBuffer(object):
         line_meta = self.line.source_meta()
         return SourceMeta(line_meta.col, self.line_num)
 
+class FileCharBuffer(LineIterCharBuffer):
+
+    def __init__(self, f):
+        LineIterCharBuffer.__init__(self, f)
+        self.path = f.name
+
+    def source_meta(self):
+        meta = LineIterCharBuffer.source_meta(self)
+        meta.filename = self.path
+        return meta
+
 class EmptyBufferException(Exception): pass
 
 class SourceMeta(object):
 
-    def __init__(self, col, line = None):
+    def __init__(self, col, line = None, filename = '<none>'):
         self.line = line
         self.col = col
+        self.filename = filename
 
     def __str__(self):
-        return 'line %s, column %s' % (self.line, self.col)
+        return '%s:%s:%s' % (self.filename, self.line, self.col)
