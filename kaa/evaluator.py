@@ -41,15 +41,15 @@ def special_form_handler(sym):
     global _special_form_handlers
     if not _special_form_handlers:
         _special_form_handlers = {
-            Symbol('def'): Def.create,
+            Symbol('def'): Def.parse,
             Symbol('defmacro'): Macro.define,
-            Symbol('if'): If.create,
-            Symbol('lambda'): Lambda.create,
-            Symbol('let'): Let.create,
-            Symbol('raise'): Raise.create,
-            Symbol('quasiquote'): Quasiquote.create,
-            Symbol('quote'): Quote.create,
-            Symbol('try'): Try.create,
+            Symbol('if'): If.parse,
+            Symbol('lambda'): Lambda.parse,
+            Symbol('let'): Let.parse,
+            Symbol('raise'): Raise.parse,
+            Symbol('quasiquote'): Quasiquote.parse,
+            Symbol('quote'): Quote.parse,
+            Symbol('try'): Try.parse,
         }
     return _special_form_handlers[sym]
 

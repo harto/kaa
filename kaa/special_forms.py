@@ -11,7 +11,7 @@ def eval_all(exprs, ns):
 class Def(object):
 
     @classmethod
-    def create(cls, L):
+    def parse(cls, L):
         try:
             sym, val = L[1:]
         except ValueError:
@@ -31,7 +31,7 @@ class Def(object):
 class If(object):
 
     @classmethod
-    def create(cls, L):
+    def parse(cls, L):
         if len(L) not in (3, 4):
             _err('invalid if form', L.source_meta)
         cond = L[1]
@@ -58,7 +58,7 @@ class If(object):
 class Lambda(object):
 
     @classmethod
-    def create(cls, L):
+    def parse(cls, L):
         try:
             params = Params.parse(L[1])
         except IndexError:
@@ -141,7 +141,7 @@ class Params(object):
 class Let(object):
 
     @classmethod
-    def create(cls, L):
+    def parse(cls, L):
         try:
             first = L[1]
         except IndexError:
@@ -202,7 +202,7 @@ class Macro(object):
 class Raise(object):
 
     @classmethod
-    def create(cls, L):
+    def parse(cls, L):
         try:
             exception = L[1]
         except IndexError:
@@ -221,7 +221,7 @@ class Raise(object):
 class Quasiquote(object):
 
     @classmethod
-    def create(cls, L):
+    def parse(cls, L):
         if len(L) != 2:
             _err('quasiquote takes one arg', L.source_meta)
         return cls(L[1])
@@ -247,7 +247,7 @@ class Quasiquote(object):
 class Quote(object):
 
     @classmethod
-    def create(cls, L):
+    def parse(cls, L):
         if len(L) != 2:
             _err('quote takes one arg', L.source_meta)
         return cls(L[1])
@@ -261,7 +261,7 @@ class Quote(object):
 class Try(object):
 
     @classmethod
-    def create(cls, L):
+    def parse(cls, L):
         if len(L) != 3:
             _err('invalid try-except form', L.source_meta)
         expr = L[1]

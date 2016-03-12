@@ -4,17 +4,17 @@ from unittest import TestCase
 
 class DefTest(TestCase):
 
-    def test_create(self):
+    def test_parse(self):
         expr = List([Symbol('def'), Symbol('foo'), 42])
-        obj = Def.create(expr)
+        obj = Def.parse(expr)
         self.assertIsInstance(obj, Def)
         self.assertEqual(Symbol('foo'), obj.symbol)
         self.assertEqual(42, obj.value)
 
-    def test_create_invalid(self):
+    def test_parse_invalid(self):
         expr = List([Symbol('def'), Symbol('foo'), 42, Symbol('bar')])
         self.assertRaises(CompilationException,
-                          lambda: Def.create(expr))
+                          lambda: Def.parse(expr))
 
     def test_def_sets_value_in_env(self):
         d = Def(Symbol('x'), 42)
@@ -25,18 +25,18 @@ class DefTest(TestCase):
 
 class LambdaTest(TestCase):
 
-    def test_create(self):
+    def test_parse(self):
         expr = List([Symbol('lambda'), List([Symbol('foo')])])
-        obj = Lambda.create(expr)
+        obj = Lambda.parse(expr)
         self.assertIsInstance(obj, Lambda)
 
-    def test_create_invalid(self):
+    def test_parse_invalid(self):
         expr = List([Symbol('lambda'), List([3])])
         self.assertRaises(CompilationException,
-                          lambda: Lambda.create(expr))
+                          lambda: Lambda.parse(expr))
 
     def test_call_produces_expected_result(self):
-        lam = Lambda.create(List([Symbol('lambda'),
+        lam = Lambda.parse(List([Symbol('lambda'),
                                   List([Symbol('x'), Symbol('y')]),
                                   List([lambda a, b: a + b,
                                         Symbol('x'),
@@ -44,16 +44,16 @@ class LambdaTest(TestCase):
         self.assertEqual(3, lam(Namespace(), 1, 2))
 
     def test_call_with_invalid_arity(self):
-        lam = Lambda.create(List([Symbol('lambda'), List([])]))
+        lam = Lambda.parse(List([Symbol('lambda'), List([])]))
         self.assertRaises(ArityException, lambda: lam(Namespace(), 'foo'))
 
 class LetTest(TestCase):
 
-    def test_create(self):
+    def test_parse(self):
         expr = List([Symbol('let'),
                      List([Symbol('x'), 42]),
                      List([Symbol('x')])])
-        obj = Let.create(expr)
+        obj = Let.parse(expr)
         self.assertIsInstance(obj, Let)
         self.assertEqual([('x', 42)], obj.bindings)
         self.assertEqual([List([Symbol('x')])], obj.body)
