@@ -26,19 +26,17 @@ class Reader(object):
             return None
         c = chars.pop()
         if c.isspace():
-            while chars.peek() and chars.peek().isspace():
-                chars.pop()
+            while chars.peek() and chars.peek().isspace(): chars.pop()
             return self.read(chars)
         elif c == ';':
-            while chars.peek():
-                chars.pop()
+            while chars.peek(): chars.pop()
             return self.read(chars)
         elif c == "'":
-            return List([Symbol('quote'), self.read(chars)])
+            return self._read_quote(chars)
         elif c == '`':
-            return List([Symbol('quasiquote'), self.read(chars)])
+            return self._read_quasiquote(chars)
         elif c == '~':
-            return List([Symbol('unquote'), self.read(chars)])
+            return self._read_unquote(chars)
         elif c == '(':
             return self._read_list(chars)
         elif c == ')':
@@ -48,10 +46,21 @@ class Reader(object):
             else:
                 return self.EOLIST
         elif c == '"':
-            chars.unpop()
             return self._read_string(chars)
         else:
             return self._read_atom(c, chars)
+
+    def _read_quote(self, chars):
+        return List([Symbol('quote', chars.source_meta()),
+                     self.read(chars)])
+
+    def _read_quasiquote(self, chars):
+        return List([Symbol('quasiquote', chars.source_meta()),
+                     self.read(chars)])
+
+    def _read_unquote(self, chars):
+        return List([Symbol('unquote', chars.source_meta()),
+                     self.read(chars)])
 
     def _read_list(self, chars):
         L = List()
@@ -66,7 +75,7 @@ class Reader(object):
 
     def _read_string(self, chars):
         try:
-            return string.read(chars)
+            return string.read(chars.unpop())
         except string.UnterminatedStringException, e:
             raise UnexpectedEofException(e)
 

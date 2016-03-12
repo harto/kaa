@@ -28,6 +28,7 @@ class CharBuffer(object):
         if self.col == 0:
             raise Exception('unpopped too far')
         self.col -= 1
+        return self
 
     def source_meta(self):
         return SourceMeta(self.col - 1, self.line_num)
@@ -66,6 +67,7 @@ class LineIterCharBuffer(object):
 
     def unpop(self):
         self.line.unpop()
+        return self
 
     def _pop_line(self):
         try:
