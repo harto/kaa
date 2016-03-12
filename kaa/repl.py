@@ -9,10 +9,13 @@ class Repl(object):
     PROMPT_1 = '=> '
     PROMPT_2 = ' > '
 
+    LAST_RESULT = '^'
+
     def __init__(self, runtime):
         self.runtime = runtime
 
     def loop(self):
+        self._update_last_result(None)
         while True:
             try:
                 exprs = self._read_exprs()
@@ -29,7 +32,11 @@ class Repl(object):
                 traceback.print_exc(1)
                 continue
             if result is not None:
+                self._update_last_result(result)
                 print(formatter.format(result))
+
+    def _update_last_result(self, value):
+        self.runtime.ns[self.LAST_RESULT] = value
 
     def _read_exprs(self):
         s = raw_input(self.PROMPT_1)

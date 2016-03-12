@@ -5,8 +5,6 @@ from os import path
 
 class Runtime(object):
 
-    LAST_RESULT = '^'
-
     def __init__(self):
         self.ns = builtins.namespace()
         self._load_stdlib()
@@ -27,9 +25,5 @@ class Runtime(object):
     def eval_all(self, exprs):
         result = None
         for expr in exprs:
-            result = self.eval(expr)
-        return result
-
-    def eval(self, expr):
-        self.ns[self.LAST_RESULT] = result = evaluator.eval(expr, self.ns)
+            result = evaluator.eval(expr, self.ns)
         return result
