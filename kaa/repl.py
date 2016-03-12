@@ -26,8 +26,7 @@ class Repl(object):
                 print
                 break
             except Exception:
-                # todo: filter internal stack frames
-                traceback.print_exc()
+                traceback.print_exc(1)
                 continue
             if result is not None:
                 print(formatter.format(result))
