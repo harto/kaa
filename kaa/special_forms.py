@@ -1,4 +1,4 @@
-from kaa.types import List, Symbol
+from kaa.core import is_list, is_symbol, List, Symbol
 import itertools
 import sys
 
@@ -16,7 +16,7 @@ class Def(object):
             sym, val = L[1:]
         except ValueError:
             sym = val = None
-        if not _is_symbol(sym):
+        if not is_symbol(sym):
             _err('invalid def form', L.source_meta)
         return cls(sym, val)
 
@@ -87,7 +87,7 @@ class Params(object):
 
     @classmethod
     def parse(cls, L):
-        if not (isinstance(L, List) and all(_is_symbol(p) for p in L)):
+        if not (is_list(L) and all(is_symbol(p) for p in L)):
             _err('invalid params', L.source_meta)
         positional_names = [sym.name for sym in cls._parse_positional(L)]
         rest = cls._parse_rest(L)
@@ -150,14 +150,14 @@ class Let(object):
 
     @classmethod
     def _parse_bindings(cls, bindings):
-        if not isinstance(bindings, List):
+        if not is_list(bindings):
             _err('let expects list of bindings as first arg', bindings.source_meta)
         if len(bindings) % 2:
             _err('let expects matching pairs of key-value bindings', bindings.source_meta)
         pairs = zip(*(iter(bindings),) * 2)
         bindings = []
         for sym, val in pairs:
-            if not _is_symbol(sym):
+            if not is_symbol(sym):
                 _err('value must be bound to symbol', bindings.source_meta)
             bindings.append((sym.name, val))
         return bindings
@@ -184,7 +184,7 @@ class Macro(object):
             params = Params.parse(L[2])
         except IndexError:
             _err('invalid macro definition', L.source_meta)
-        if not _is_symbol(name):
+        if not is_symbol(name):
             _err('invalid macro name', name.source_meta)
         body = L[3:]
         return Def(name, cls(params, body))
@@ -230,7 +230,7 @@ class Quasiquote(object):
         return self.eval_unquotes(self.quoted, ns)
 
     def eval_unquotes(self, expr, ns):
-        if not (isinstance(expr, List) and len(expr)):
+        if not (is_list(expr) and len(expr)):
             return expr
         first = expr[0]
         if first == Symbol('unquote'):
@@ -267,7 +267,7 @@ class Try(object):
 
     @classmethod
     def _parse_handler(cls, L):
-        if not (isinstance(L, List) and len(L) == 3 and L[0] == Symbol('except')):
+        if not (is_list(L) and len(L) == 3 and L[0] == Symbol('except')):
             _err('invalid except form', L.source_meta)
         return L[1:3]
 
@@ -285,9 +285,6 @@ class Try(object):
                 if isinstance(ex, ex_type):
                     return eval(handler, ns)
             raise
-
-def _is_symbol(x):
-    return isinstance(x, Symbol)
 
 def _err(msg, source_meta = None):
     if source_meta:

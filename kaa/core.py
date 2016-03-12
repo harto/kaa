@@ -1,29 +1,5 @@
 from kaa import formatter
-
-class Namespace(object):
-
-    def __init__(self, bindings = None, parent = None):
-        self.bindings = bindings or {}
-        self.parent = parent
-
-    def __contains__(self, k):
-        return k in self.bindings or \
-            (self.parent and k in self.parent)
-
-    def __getitem__(self, k):
-        try:
-            return self.bindings[k]
-        except KeyError:
-            if self.parent:
-                return self.parent[k]
-            else:
-                raise
-
-    def __setitem__(self, k, v):
-        self.bindings[k] = v
-
-    def push(self, bindings = None):
-        return Namespace(bindings=bindings, parent=self)
+from kaa.evaluator import eval
 
 class List(object):
 
@@ -78,4 +54,38 @@ class Symbol(object):
 
 class UnboundSymbolException(Exception): pass
 
-from kaa.evaluator import eval
+def is_list(x):
+    return isinstance(x, List)
+
+def is_symbol(x):
+    return isinstance(x, Symbol)
+
+def list_(*xs):
+    return List(xs)
+
+def not_(val):
+    return not val
+
+def print_(*xs):
+    print(str_(*xs))
+
+def str_(*xs):
+    return ' '.join(map(str, xs))
+
+add = lambda a, b: a + b
+eql = lambda a, b: a == b
+mul = lambda a, b: a * b
+
+def builtins():
+    return {'True': True,
+            'False': False,
+            'None': None,
+            '+': add,
+            '=': eql,
+            '*': mul,
+            'list': list_,
+            'list?': is_list,
+            'not': not_,
+            'print': print_,
+            'str': str_,
+            'symbol?': is_symbol}

@@ -54,4 +54,4 @@ def special_form_handler(sym):
     return _special_form_handlers[sym]
 
 from kaa.special_forms import *
-from kaa.types import List, Symbol
+from kaa.core import List, Symbol

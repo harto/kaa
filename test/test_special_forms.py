@@ -1,5 +1,6 @@
+from kaa.core import List, Symbol
+from kaa.ns import Namespace
 from kaa.special_forms import *
-from kaa.types import List, Namespace, Symbol
 from unittest import TestCase
 
 class DefTest(TestCase):

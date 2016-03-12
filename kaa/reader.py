@@ -1,5 +1,5 @@
 from kaa import string
-from kaa.types import List, Symbol
+from kaa.core import List, Symbol
 import re
 
 class Reader(object):
