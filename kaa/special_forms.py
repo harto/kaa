@@ -12,12 +12,12 @@ class Def(object):
 
     @classmethod
     def parse(cls, L):
-        try:
-            sym, val = L[1:]
-        except ValueError:
-            sym = val = None
+        if len(L) != 3:
+            _err('wrong number of args to def', L)
+        sym = L[1]
         if not is_symbol(sym):
-            _err('invalid def form', L.source_meta)
+            _err('first arg to def must be symbol', L)
+        val = L[2]
         return cls(sym, val)
 
     def __init__(self, symbol, value):
@@ -33,16 +33,10 @@ class If(object):
     @classmethod
     def parse(cls, L):
         if len(L) not in (3, 4):
-            _err('invalid if form', L.source_meta)
-        cond = L[1]
-        then = L[2]
-        try:
-            else_ = L[3]
-        except IndexError:
-            else_ = None
-        return cls(cond, then, else_)
+            _err('wrong number of args to if', L)
+        return cls(*L[1:])
 
-    def __init__(self, cond, then, else_):
+    def __init__(self, cond, then, else_ = None):
         self.cond = cond
         self.then = then
         self.else_ = else_
@@ -59,10 +53,9 @@ class Lambda(object):
 
     @classmethod
     def parse(cls, L):
-        try:
-            params = Params.parse(L[1])
-        except IndexError:
-            _err('missing params list', L.source_meta)
+        if len(L) < 2:
+            _err('missing params list', L)
+        params = Params.parse(L[1])
         body = L[2:]
         return cls(params, body)
 
@@ -88,7 +81,7 @@ class Params(object):
     @classmethod
     def parse(cls, L):
         if not (is_list(L) and all(is_symbol(p) for p in L)):
-            _err('invalid params', L.source_meta)
+            _err('params must be list of symbols', L)
         positional_names = [sym.name for sym in cls._parse_positional(L)]
         rest = cls._parse_rest(L)
         rest_name = rest and rest.name or None
@@ -102,7 +95,7 @@ class Params(object):
     def _parse_rest(cls, L):
         decl = list(itertools.dropwhile(lambda s: s != Symbol('&'), L))
         if len(decl) not in (0, 2):
-            _err('invalid rest declaration', L.source_meta)
+            _err('invalid rest declaration', L)
         try:
             return decl[1]
         except IndexError:
@@ -140,25 +133,23 @@ class Let(object):
 
     @classmethod
     def parse(cls, L):
-        try:
-            first = L[1]
-        except IndexError:
-            first = None
-        rest = L[2:]
-        bindings = cls._parse_bindings(first)
-        return cls(bindings, rest)
+        if len(L) < 2:
+            _err('wrong number of args to let', L)
+        bindings = cls._parse_bindings(L[1])
+        body = L[2:]
+        return cls(bindings, body)
 
     @classmethod
     def _parse_bindings(cls, bindings):
         if not is_list(bindings):
-            _err('let expects list of bindings as first arg', bindings.source_meta)
+            _err('let expects list of bindings as first arg', bindings)
         if len(bindings) % 2:
-            _err('let expects matching pairs of key-value bindings', bindings.source_meta)
+            _err('let expects matching pairs of key-value bindings', bindings)
         pairs = zip(*(iter(bindings),) * 2)
         bindings = []
         for sym, val in pairs:
             if not is_symbol(sym):
-                _err('value must be bound to symbol', bindings.source_meta)
+                _err('value must be bound to symbol', bindings)
             bindings.append((sym.name, val))
         return bindings
 
@@ -179,13 +170,12 @@ class Macro(object):
 
     @classmethod
     def define(cls, L):
-        try:
-            name = L[1]
-            params = Params.parse(L[2])
-        except IndexError:
-            _err('invalid macro definition', L.source_meta)
+        if len(L) < 3:
+            _err('wrong number of args to defmacro', L)
+        name = L[1]
         if not is_symbol(name):
-            _err('invalid macro name', name.source_meta)
+            _err('invalid macro name', name)
+        params = Params.parse(L[2])
         body = L[3:]
         return Def(name, cls(params, body))
 
@@ -203,7 +193,7 @@ class Raise(object):
         try:
             exception = L[1]
         except IndexError:
-            _err('raise takes one arg', L.source_meta)
+            _err('raise takes one arg', L)
         return cls(exception)
 
     def __init__(self, exception):
@@ -220,7 +210,7 @@ class Quote(object):
     @classmethod
     def parse(cls, L):
         if len(L) != 2:
-            _err('quote takes one arg', L.source_meta)
+            _err('quote takes one arg', L)
         return cls(L[1])
 
     def __init__(self, quoted):
@@ -234,7 +224,7 @@ class Try(object):
     @classmethod
     def parse(cls, L):
         if len(L) != 3:
-            _err('invalid try-except form', L.source_meta)
+            _err('invalid try-except form', L)
         expr = L[1]
         handlers = [cls._parse_handler(except_) for except_ in L[2:]]
         return cls(expr, handlers)
@@ -242,7 +232,7 @@ class Try(object):
     @classmethod
     def _parse_handler(cls, L):
         if not (is_list(L) and len(L) == 3 and L[0] == Symbol('except')):
-            _err('invalid except form', L.source_meta)
+            _err('invalid except form', L)
         return L[1:3]
 
     def __init__(self, expr, handlers):
@@ -260,9 +250,9 @@ class Try(object):
                     return eval(handler, ns)
             raise
 
-def _err(msg, source_meta = None):
-    if source_meta:
-        msg += ' (%s)' % source_meta
+def _err(msg, obj = None):
+    if obj:
+        msg += ' at %s' % obj.source_meta
     raise CompilationException(msg)
 
 class ArityException(Exception): pass

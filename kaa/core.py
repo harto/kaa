@@ -26,11 +26,19 @@ class List(object):
     def concat(self, other):
         return List(self.members + other.members)
 
+    def empty(self):
+        return len(self) == 0
+
     def eval(self, ns):
         return self
 
+    def first(self):
+        if not self.empty():
+            return self.members[0]
+
     def rest(self):
-        return len(self.members) > 1 and List(self.members[1:]) or None
+        if len(self.members) > 1:
+            return List(self.members[1:])
 
 class Symbol(object):
 
@@ -64,7 +72,7 @@ def concat(*Ls):
     return reduce(List.concat, Ls)
 
 def empty(L):
-    return len(L) == 0
+    return L.empty()
 
 def is_list(x):
     return isinstance(x, List)
@@ -76,7 +84,7 @@ def list_(*xs):
     return List(xs)
 
 def first(L):
-    return (is_list(L) and not empty(L)) and L[0] or None
+    return is_list(L) and L.first() or None
 
 def not_(val):
     return not val
