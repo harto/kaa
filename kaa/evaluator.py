@@ -47,7 +47,6 @@ def special_form_handler(sym):
             Symbol('lambda'): Lambda.parse,
             Symbol('let'): Let.parse,
             Symbol('raise'): Raise.parse,
-            Symbol('quasiquote'): Quasiquote.parse,
             Symbol('quote'): Quote.parse,
             Symbol('try'): Try.parse,
         }

@@ -23,8 +23,14 @@ class List(object):
     def append(self, x):
         self.members.append(x)
 
+    def concat(self, other):
+        return List(self.members + other.members)
+
     def eval(self, ns):
         return self
+
+    def rest(self):
+        return len(self.members) > 1 and List(self.members[1:]) or None
 
 class Symbol(object):
 
@@ -54,6 +60,12 @@ class Symbol(object):
 
 class UnboundSymbolException(Exception): pass
 
+def concat(*Ls):
+    return reduce(List.concat, Ls)
+
+def empty(L):
+    return len(L) == 0
+
 def is_list(x):
     return isinstance(x, List)
 
@@ -63,11 +75,17 @@ def is_symbol(x):
 def list_(*xs):
     return List(xs)
 
+def first(L):
+    return (is_list(L) and not empty(L)) and L[0] or None
+
 def not_(val):
     return not val
 
 def print_(*xs):
     print(str_(*xs))
+
+def rest(L):
+    return is_list(L) and L.rest() or None
 
 def str_(*xs):
     return ' '.join(map(str, xs))
@@ -83,9 +101,12 @@ def builtins():
             '+': add,
             '=': eql,
             '*': mul,
+            'concat': concat,
+            'first': first,
             'list': list_,
             'list?': is_list,
             'not': not_,
             'print': print_,
+            'rest': rest,
             'str': str_,
             'symbol?': is_symbol}

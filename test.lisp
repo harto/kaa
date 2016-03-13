@@ -39,12 +39,8 @@
 (def x 4)
 (assert (= 4 (get-x)))
 
-;; (defmacro do (& exprs)
-;;   `((lambda () ~@exprs)))
 
-;; (try (do (assert (= 1 2))
-;;          (raise "oops, shouldn't be here"))
-;;      (except py/AssertionError None))
-
-(try (raise "oops")
-     (except py/Exception None))
+;; try/raise/except
+(try (do (assert (= 1 2))
+         (raise "fail"))
+     (except py/AssertionError None))

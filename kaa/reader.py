@@ -1,5 +1,5 @@
 from kaa import string
-from kaa.core import List, Symbol
+from kaa.core import empty, first, is_list, rest, List, Symbol
 import re
 
 class Reader(object):
@@ -55,12 +55,16 @@ class Reader(object):
                      self.read(chars)])
 
     def _read_quasiquote(self, chars):
-        return List([Symbol('quasiquote', chars.source_meta()),
-                     self.read(chars)])
+        return _process_quasiquote(self.read(chars))
 
     def _read_unquote(self, chars):
-        return List([Symbol('unquote', chars.source_meta()),
-                     self.read(chars)])
+        if chars.peek() == '@':
+            chars.pop()
+            return List([Symbol('unquote-splice', chars.source_meta()),
+                         self.read(chars)])
+        else:
+            return List([Symbol('unquote', chars.source_meta()),
+                         self.read(chars)])
 
     def _read_list(self, chars):
         L = List()
@@ -93,3 +97,26 @@ class Reader(object):
 
 class UnbalancedDelimiterException(Exception): pass
 class UnexpectedEofException(Exception): pass
+
+# References:
+#  - http://axisofeval.blogspot.com/2013/04/a-quasiquote-i-can-understand.html
+#  - Clojure
+
+def _process_quasiquote(obj):
+    # `a -> 'a
+    if not is_list(obj) or empty(obj):
+        return List([Symbol('quote'), obj])
+    # `~a -> a
+    if first(obj) == Symbol('unquote'):
+        return obj
+    # `(a ~b ~@c) -> (concat (list 'a) (list b) c)
+    return List([Symbol('concat')] +
+                [_process_quasiquote_list_item(o) for o in obj])
+
+def _process_quasiquote_list_item(obj):
+    if first(obj) == Symbol('unquote'):
+        return List([Symbol('list'), first(rest(obj))])
+    elif first(obj) == Symbol('unquote-splice'):
+        return first(rest(obj))
+    else:
+        return List([Symbol('list'), _process_quasiquote(obj)])
