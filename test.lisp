@@ -35,7 +35,7 @@
                 (+ c x)))))
 (assert (= 4 (inc2 3)))
 (def x 3)
-(def get-x (lambda () x))
+(defun get-x () x)
 (def x 4)
 (assert (= 4 (get-x)))
 
