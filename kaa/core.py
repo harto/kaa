@@ -9,7 +9,7 @@ class List(object):
 
     def __eq__(self, other):
         return type(other) == type(self) \
-            and other.members == self.members
+            and list(other.members) == list(self.members)
 
     def __getitem__(self, i):
         return self.members[i]
