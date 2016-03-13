@@ -6,7 +6,7 @@ def eval_all(exprs, ns):
     result = None
     for e in exprs:
         result = eval(e, ns)
-        return result
+    return result
 
 class Def(object):
 
