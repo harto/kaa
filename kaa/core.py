@@ -23,9 +23,6 @@ class List(object):
     def append(self, x):
         self.members.append(x)
 
-    def concat(self, other):
-        return List(self.members + other.members)
-
     def empty(self):
         return len(self) == 0
 
@@ -69,7 +66,9 @@ class Symbol(object):
 class UnboundSymbolException(Exception): pass
 
 def concat(*Ls):
-    return reduce(List.concat, Ls)
+    return reduce(lambda x, y: List((x and list(x.members) or []) +
+                                    (y and list(y.members) or [])),
+                  Ls)
 
 def empty(L):
     return L.empty()
