@@ -39,8 +39,23 @@
 (def x 4)
 (assert (= 4 (get-x)))
 
+;; unquoting / splicing
+;; (let (x '(b c d))
+;;   (assert (= '(a (b c d) e)
+;;              `(a ~x e)))
+;;   (assert (= '(a b c d e)
+;;              `(a ~@x e))))
 
 ;; try/raise/except
 (try (do (assert (= 1 2))
          (raise "fail"))
      (except py/AssertionError None))
+
+;; conditionals
+(assert (= "ok" (if True "ok" "fail")))
+(assert (= None (if False "fail")))
+(assert (and))
+(assert (and "foo"))
+(assert (and 1 2))
+(assert (not (and False "foo")))
+(assert (not (and None (raise "shouldn't get here"))))

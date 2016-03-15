@@ -1,3 +1,9 @@
+(defmacro and (& conds)
+  (if conds
+      `(if ~(first conds)
+         (and ~@(rest conds)))
+    True))
+
 (defmacro assert (assertion)
   `(if (not ~assertion)
        (raise (py/AssertionError (str '~assertion)))))
