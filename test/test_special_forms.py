@@ -48,23 +48,6 @@ class LambdaTest(TestCase):
         lam = Lambda.parse(List([Symbol('lambda'), List([])]))
         self.assertRaises(ArityException, lambda: lam(Namespace(), 'foo'))
 
-class LetTest(TestCase):
-
-    def test_parse(self):
-        expr = List([Symbol('let'),
-                     List([Symbol('x'), 42]),
-                     List([Symbol('x')])])
-        obj = Let.parse(expr)
-        self.assertIsInstance(obj, Let)
-        self.assertEqual([('x', 42)], obj.bindings)
-        self.assertEqual([List([Symbol('x')])], obj.body)
-
-    def test_body_evaluates_with_bindings(self):
-        let = Let([('x', 42)],
-                  [Symbol('x')])
-        ns = Namespace({'x': 5})
-        self.assertEqual(42, let.eval(ns))
-
 class RaiseTest(TestCase):
 
     def test_raises_exception(self):

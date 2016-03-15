@@ -45,7 +45,6 @@ def special_form_handler(sym):
             Symbol('defmacro'): Macro.define,
             Symbol('if'): If.parse,
             Symbol('lambda'): Lambda.parse,
-            Symbol('let'): Let.parse,
             Symbol('raise'): Raise.parse,
             Symbol('quote'): Quote.parse,
             Symbol('try'): Try.parse,

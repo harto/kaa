@@ -109,6 +109,7 @@ def builtins():
             '=': eql,
             '*': mul,
             'concat': concat,
+            'count': len,
             'first': first,
             'list': list_,
             'list?': is_list,

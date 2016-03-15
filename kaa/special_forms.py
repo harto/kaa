@@ -128,44 +128,6 @@ class Params(object):
             if self.rest_name: expected += '+'
             raise ArityException('expected %s args, got %d' % (expected, received))
 
-# todo: replace with macro
-class Let(object):
-
-    @classmethod
-    def parse(cls, L):
-        if len(L) < 2:
-            _err('wrong number of args to let', L)
-        bindings = cls._parse_bindings(L[1])
-        body = L[2:]
-        return cls(bindings, body)
-
-    @classmethod
-    def _parse_bindings(cls, bindings):
-        if not is_list(bindings):
-            _err('let expects list of bindings as first arg', bindings)
-        if len(bindings) % 2:
-            _err('let expects matching pairs of key-value bindings', bindings)
-        pairs = zip(*(iter(bindings),) * 2)
-        bindings = []
-        for sym, val in pairs:
-            if not is_symbol(sym):
-                _err('value must be bound to symbol', bindings)
-            bindings.append((sym.name, val))
-        return bindings
-
-    def __init__(self, bindings, body):
-        self.bindings = bindings
-        self.body = body
-
-    def eval(self, ns):
-        return eval_all(self.body, self.with_bindings(ns))
-
-    def with_bindings(self, ns):
-        ns = ns.push()
-        for name, expr in self.bindings:
-            ns[name] = eval(expr, ns)
-        return ns
-
 class Macro(object):
 
     @classmethod
