@@ -95,7 +95,7 @@ def rest(L):
     return is_list(L) and L.rest() or None
 
 def str_(*xs):
-    return ' '.join(map(str, xs))
+    return ''.join(map(str, xs))
 
 add = lambda a, b: a + b
 eql = lambda a, b: a == b

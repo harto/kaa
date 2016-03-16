@@ -4,9 +4,11 @@
          (and ~@(rest conds)))
     True))
 
-(defmacro assert (assertion)
+(defmacro assert (assertion & msg)
   `(if (not ~assertion)
-       (raise (py/AssertionError (str '~assertion)))))
+       (raise (py/AssertionError ~(if msg
+                                      (str assertion "\n" (first msg))
+                                    (str assertion))))))
 
 (defmacro defun (sym params & body)
   `(def ~sym (lambda ~params ~@body)))
@@ -17,13 +19,14 @@
 (defmacro let (bindings & body)
   (if bindings
       (do
-          ;; "let expects list of bindings as first arg"
-          (assert (list? bindings))
-          ;; "let expects matching pairs of key-value bindings"
-          (assert (list? (first bindings)))
-          (assert (= 2 (count (first bindings))))
-          ;; "value must be bound to symbol"
-          (assert (symbol? (first (first bindings))))
+          (assert (list? bindings)
+                  "let expects list of bindings as first arg")
+          (assert (list? (first bindings))
+                  "let binding pairs must be 2-element lists")
+          (assert (= 2 (count (first bindings)))
+                  "let binding pairs must be 2-element lists")
+          (assert (symbol? (first (first bindings)))
+                  "value must be bound to symbol")
           `((lambda (~(first (first bindings)))
               (let ~(rest bindings) ~@body))
             ~(first (rest (first bindings)))))
