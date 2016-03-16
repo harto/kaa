@@ -81,18 +81,24 @@ class Params(object):
     def parse(cls, L):
         if not (is_list(L) and all(is_symbol(p) for p in L)):
             _err('params must be list of symbols', L)
-        positional_names = [sym.name for sym in cls._parse_positional(L)]
+        required_names = [sym.name for sym in cls._parse_required(L)]
+        optional_names = [sym.name for sym in cls._parse_optional(L)]
         rest = cls._parse_rest(L)
         rest_name = rest and rest.name or None
-        return cls(positional_names, rest_name)
+        return cls(required_names, optional_names, rest_name)
 
     @classmethod
-    def _parse_positional(cls, L):
-        return list(itertools.takewhile(lambda s: s != Symbol('&'), L))
+    def _parse_required(cls, L):
+        return list(itertools.takewhile(lambda s: not s.name.startswith('&'), L))
+
+    @classmethod
+    def _parse_optional(cls, L):
+        decl = list(itertools.dropwhile(lambda s: s != Symbol('&optional'), L))
+        return list(itertools.takewhile(lambda s: not s.name.startswith('&'), decl[1:]))
 
     @classmethod
     def _parse_rest(cls, L):
-        decl = list(itertools.dropwhile(lambda s: s != Symbol('&'), L))
+        decl = list(itertools.dropwhile(lambda s: s != Symbol('&rest'), L))
         if len(decl) not in (0, 2):
             _err('invalid rest declaration', L)
         try:
@@ -100,32 +106,39 @@ class Params(object):
         except IndexError:
             return None
 
-    def __init__(self, positional_names, rest_name = None):
-        self.positional_names = positional_names
+    def __init__(self, required_names = [], optional_names = [], rest_name = None):
+        self.required_names = required_names
+        self.optional_names = optional_names
         self.rest_name = rest_name
-        self.arity = len(positional_names)
+        self.min_arity = len(required_names)
+        self.max_arity = (rest_name is not None
+                          and float('inf')
+                          or (self.min_arity + len(optional_names)))
 
     def bind(self, args):
         self._check_arity(args)
-        bound = dict(zip([name for name in self.positional_names], args))
+        bound = dict(zip([name for name in self.required_names], args))
+        bound.update(dict(zip([name for name in self.optional_names],
+                              itertools.chain(args[len(self.required_names):],
+                                              itertools.repeat(None)))))
         if self.rest_name:
-            bound[self.rest_name] = List(args[len(self.positional_names):])
+            num_consumed = len(self.required_names) + len(self.optional_names)
+            bound[self.rest_name] = List(args[num_consumed:])
         return bound
 
-    def arity(self):
-        min_allowed = len(self.positional_names)
-        if self.rest_name:
-            max_allowed = None
+    def _describe_arity(self):
+        if self.max_arity == float('inf'):
+            return '%d or more' % self.min_arity
+        elif self.min_arity != self.max_arity:
+            return 'between %d and %d' % (self.min_arity, self.max_arity)
         else:
-            max_allowed = min_allowed
-        return (min_allowed, max_allowed)
+            return str(self.min_arity)
 
     def _check_arity(self, args):
         received = len(args)
-        if received < self.arity or (received > self.arity and not self.rest_name):
-            expected = str(self.arity)
-            if self.rest_name: expected += '+'
-            raise ArityException('expected %s args, got %d' % (expected, received))
+        if received < self.min_arity or self.max_arity < received:
+            raise ArityException('expected %s args, got %d' %
+                                 (self._describe_arity(), received))
 
 class Macro(object):
 

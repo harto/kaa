@@ -1,22 +1,22 @@
-(defmacro and (& conds)
+(defmacro and (&rest conds)
   (if conds
       `(if ~(first conds)
          (and ~@(rest conds)))
     True))
 
-(defmacro assert (assertion & msg)
+(defmacro assert (assertion &optional msg)
   `(if (not ~assertion)
        (raise (py/AssertionError ~(if msg
-                                      (str assertion "\n" (first msg))
+                                      (str assertion "\n" msg)
                                     (str assertion))))))
 
-(defmacro defun (sym params & body)
+(defmacro defun (sym params &rest body)
   `(def ~sym (lambda ~params ~@body)))
 
-(defmacro do (& forms)
+(defmacro do (&rest forms)
   `((lambda () ~@forms)))
 
-(defmacro let (bindings & body)
+(defmacro let (bindings &rest body)
   (if bindings
       (do
           (assert (list? bindings)
