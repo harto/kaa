@@ -36,7 +36,7 @@ class Repl(object):
                 print(formatter.format(result))
 
     def _update_last_result(self, value):
-        self.runtime.ns[self.LAST_RESULT] = value
+        self.runtime.ns.define_global(self.LAST_RESULT, value)
 
     def _read_exprs(self):
         s = raw_input(self.PROMPT_1)

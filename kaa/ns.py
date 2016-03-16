@@ -17,8 +17,12 @@ class Namespace(object):
             else:
                 raise
 
-    def __setitem__(self, k, v):
-        self.bindings[k] = v
+    def define_global(self, k, v):
+        if self.parent:
+            return self.parent.define_global(k, v)
+        else:
+            self.bindings[k] = v
+            return v
 
     def push(self, bindings = None):
         return Namespace(bindings=bindings, parent=self)

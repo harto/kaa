@@ -12,7 +12,7 @@ class Runtime(object):
 
     def _load_stdlib(self):
         for name, value in core.builtins().items():
-            self.ns[name] = value
+            self.ns.define_global(name, value)
         self.eval_file(path.join(path.dirname(__file__), 'core.lisp'))
 
     def eval_file(self, path):

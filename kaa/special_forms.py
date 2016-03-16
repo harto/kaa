@@ -25,8 +25,7 @@ class Def(object):
         self.value = value
 
     def eval(self, ns):
-        result = ns[self.symbol.name] = eval(self.value, ns)
-        return result
+        return ns.define_global(self.symbol.name, eval(self.value, ns))
 
 class If(object):
 
