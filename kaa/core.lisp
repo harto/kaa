@@ -21,9 +21,8 @@
       (do
           (assert (list? bindings)
                   "let expects list of bindings as first arg")
-          (assert (list? (first bindings))
-                  "let binding pairs must be 2-element lists")
-          (assert (= 2 (count (first bindings)))
+          (assert (and (list? (first bindings))
+                       (= 2 (count (first bindings))))
                   "let binding pairs must be 2-element lists")
           (assert (symbol? (first (first bindings)))
                   "value must be bound to symbol")
