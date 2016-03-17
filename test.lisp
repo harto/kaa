@@ -54,8 +54,13 @@
 ;; conditionals
 (assert (= "ok" (if True "ok" "fail")))
 (assert (= None (if False "fail")))
+
 (assert (and))
 (assert (and "foo"))
 (assert (and 1 2))
 (assert (not (and False "foo")))
 (assert (not (and None (raise "shouldn't get here"))))
+
+(assert (not (or)))
+(assert (= "foo" (or "foo")))
+(assert (= "bar" (or False "bar" (raise "shouldn't get here"))))

@@ -30,3 +30,18 @@
               (let ~(rest bindings) ~@body))
             ~(first (rest (first bindings)))))
     `(do ~@body)))
+
+(def *gensym-counter* 0)
+
+(defun gensym (&optional prefix)
+  (let ((next-value *gensym-counter*))
+    (def *gensym-counter* (+ *gensym-counter* 1))
+    (symbol (str (if prefix prefix "G") "__" next-value))))
+
+(defmacro or (&rest conds)
+  (if conds
+      (let ((sym (gensym)))
+        `(let ((~sym ~(first conds)))
+           (if ~sym
+               ~sym
+             (or ~@(rest conds)))))))

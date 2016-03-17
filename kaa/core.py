@@ -97,6 +97,9 @@ def rest(L):
 def str_(*xs):
     return ''.join(map(str, xs))
 
+def symbol(name):
+    return Symbol(str(name))
+
 add = lambda a, b: a + b
 eql = lambda a, b: a == b
 mul = lambda a, b: a * b
@@ -117,4 +120,5 @@ def builtins():
             'print': print_,
             'rest': rest,
             'str': str_,
+            'symbol': symbol,
             'symbol?': is_symbol}
