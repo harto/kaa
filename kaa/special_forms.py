@@ -61,18 +61,18 @@ class Lambda(object):
     def __init__(self, params, body):
         self.params = params
         self.body = body
-        self.lexical_bindings = None
+        self.lexical_env = None
 
     def __call__(self, ns, *args):
-        if self.lexical_bindings:
-            ns = ns.push(self.lexical_bindings)
+        if self.lexical_env:
+            ns = ns.push(self.lexical_env)
         ns = ns.push(self.params.bind(args))
         return eval_all(self.body, ns)
 
     def eval(self, ns):
-        if self.lexical_bindings is None:
+        if self.lexical_env is None:
             # could optimise this, e.g. don't capture if no free vars
-            self.lexical_bindings = ns
+            self.lexical_env = ns
         return self
 
 class Params(object):
