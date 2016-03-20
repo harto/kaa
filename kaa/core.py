@@ -3,9 +3,9 @@ from kaa.evaluator import eval
 
 class List(object):
 
-    def __init__(self, members = None, source_meta = None):
+    def __init__(self, members = None, meta = None):
         self.members = members or []
-        self.source_meta = source_meta
+        self.meta = meta or {}
 
     def __eq__(self, other):
         return type(other) == type(self) \
@@ -39,9 +39,9 @@ class List(object):
 
 class Symbol(object):
 
-    def __init__(self, name, source_meta = None):
+    def __init__(self, name, meta = None):
         self.name = name
-        self.source_meta = source_meta
+        self.meta = meta or {}
 
     def __eq__(self, other):
         return type(other) == type(self) \
@@ -60,10 +60,16 @@ class Symbol(object):
         try:
             return ns[self.name]
         except KeyError:
-            raise UnboundSymbolException(
-                '%s at %s' % (self.name, self.source_meta))
+            raise UnboundSymbolException(self)
 
-class UnboundSymbolException(Exception): pass
+class UnboundSymbolException(Exception):
+
+    def __init__(self, sym):
+        try:
+            msg = '%s at %s' % (sym.name, sym.meta['source'])
+        except KeyError:
+            msg = sym.name
+        Exception.__init__(self, msg)
 
 def concat(*Ls):
     return reduce(lambda x, y: List((x and list(x.members) or []) +

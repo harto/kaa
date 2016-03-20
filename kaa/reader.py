@@ -51,7 +51,7 @@ class Reader(object):
             return self._read_atom(c, chars)
 
     def _read_quote(self, chars):
-        return List([Symbol('quote', chars.source_meta()),
+        return List([Symbol('quote', {'source': chars.source_meta()}),
                      self.read(chars)])
 
     def _read_quasiquote(self, chars):
@@ -60,15 +60,15 @@ class Reader(object):
     def _read_unquote(self, chars):
         if chars.peek() == '@':
             chars.pop()
-            return List([Symbol('unquote-splice', chars.source_meta()),
+            return List([Symbol('unquote-splice', {'source': chars.source_meta()}),
                          self.read(chars)])
         else:
-            return List([Symbol('unquote', chars.source_meta()),
+            return List([Symbol('unquote', {'source': chars.source_meta()}),
                          self.read(chars)])
 
     def _read_list(self, chars):
         L = List()
-        L.source_meta = chars.source_meta()
+        L.meta = {'source': chars.source_meta()}
         self.list_depth += 1
         for obj in self.read_all(chars):
             if obj == self.EOLIST:
@@ -84,7 +84,7 @@ class Reader(object):
             raise UnexpectedEofException(e)
 
     def _read_atom(self, first_char, chars):
-        source_meta = chars.source_meta()
+        meta = {'source': chars.source_meta()}
         token = first_char
         while chars.peek() and self.ATOM.match(chars.peek()):
             token += chars.pop()
@@ -93,7 +93,7 @@ class Reader(object):
         elif token.startswith('py/'):
             return eval(token[3:])
         else:
-            return Symbol(token, source_meta)
+            return Symbol(token, meta)
 
 class UnbalancedDelimiterException(Exception): pass
 class UnexpectedEofException(Exception): pass

@@ -225,8 +225,10 @@ class Try(object):
             raise
 
 def _err(msg, obj = None):
-    if obj:
-        msg += ' at %s' % obj.source_meta
+    try:
+        msg += ' at %s' % obj.meta['source']
+    except KeyError:
+        pass
     raise CompilationException(msg)
 
 class ArityException(Exception): pass
