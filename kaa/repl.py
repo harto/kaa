@@ -22,11 +22,11 @@ class Repl(object):
                 result = self.runtime.eval_all(exprs)
             except KeyboardInterrupt:
                 # Ctrl-C; user wants to abandon current input
-                print
+                print()
                 continue
             except EOFError:
                 # Ctrl-D; user wants to quit
-                print
+                print()
                 break
             except Exception:
                 traceback.print_exc(1)
@@ -39,7 +39,7 @@ class Repl(object):
         self.runtime.ns.define_global(self.LAST_RESULT, value)
 
     def _read_exprs(self):
-        s = raw_input(self.PROMPT_1)
+        s = input(self.PROMPT_1)
         while True:
             buf = CharBuffer(s)
             try:
@@ -47,4 +47,4 @@ class Repl(object):
                 # to flush out unexpected EOF
                 return list(Reader().read_all(buf))
             except UnexpectedEofException:
-                s += '\n' + raw_input(self.PROMPT_2)
+                s += '\n' + input(self.PROMPT_2)

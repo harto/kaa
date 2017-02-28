@@ -26,7 +26,7 @@ def boot():
             runtime.eval_file(path)
 
     elif sys.stdin.isatty():
-        from repl import Repl
+        from .repl import Repl
         Repl(runtime).loop()
 
     else:

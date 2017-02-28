@@ -80,7 +80,7 @@ class Reader(object):
     def _read_string(self, chars):
         try:
             return string.read(chars.unpop())
-        except string.UnterminatedStringException, e:
+        except string.UnterminatedStringException as e:
             raise UnexpectedEofException(e)
 
     def _read_atom(self, first_char, chars):

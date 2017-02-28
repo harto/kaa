@@ -1,7 +1,7 @@
 Kaa
 ===
 
-A toy Lisp implementation in Python.
+A toy Lisp implementation in Python 3.
 
 Named after the [Jungle Book character](https://en.wikipedia.org/wiki/Kaa). It
 also sounds like the Australian pronunciation of
@@ -12,7 +12,7 @@ Installation
 ------------
 
 ```
-$ python setup.py develop
+$ python3 setup.py develop
 ```
 
 

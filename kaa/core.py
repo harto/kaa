@@ -1,5 +1,6 @@
 from kaa import formatter
 from kaa.evaluator import eval
+from functools import reduce
 
 class List(object):
 
