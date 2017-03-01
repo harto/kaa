@@ -9,6 +9,7 @@
 (assert (= 126 bar))
 
 ;; lambdas
+(assert (= None ((lambda ()))))
 (def x 5)
 (def add (lambda (x y)
            (+ x y)))
@@ -18,6 +19,7 @@
 ;; let
 (def x 1)
 (def y 42)
+(let ())
 (let ((x 2))
   (let ((x y))
     (assert (= y x)))
