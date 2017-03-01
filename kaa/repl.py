@@ -4,6 +4,7 @@ from kaa.reader import Reader, EOF
 import re
 import traceback
 
+# TODO: proper line-editing support, etc.
 class Repl(object):
 
     PROMPT_1 = '=> '
@@ -15,7 +16,7 @@ class Repl(object):
         self.runtime = runtime
 
     def loop(self):
-        self._update_last_result(None)
+        self._store_last_result(None)
         while True:
             try:
                 exprs = self._read_exprs()
@@ -32,10 +33,10 @@ class Repl(object):
                 traceback.print_exc(1)
                 continue
             if result is not None:
-                self._update_last_result(result)
+                self._store_last_result(result)
                 print(formatter.format(result))
 
-    def _update_last_result(self, value):
+    def _store_last_result(self, value):
         self.runtime.ns.define_global(self.LAST_RESULT, value)
 
     def _read_exprs(self):
