@@ -107,9 +107,14 @@ def str_(*xs):
 def symbol(name):
     return Symbol(str(name))
 
-add = lambda a, b: a + b
-eql = lambda a, b: a == b
-mul = lambda a, b: a * b
+def add(*xs):
+    return reduce(lambda acc, x: acc + x, xs, 0)
+
+def eql(*xs):
+    return all(x == xs[0] for x in xs)
+
+def mul(*xs):
+    return reduce(lambda acc, x: acc * x, xs, 1)
 
 def builtins():
     return {'True': True,
