@@ -15,12 +15,10 @@ class ReaderTest(TestCase):
         self.assertEqual(Symbol('foo-bar'), self._read_object('foo-bar'))
 
     def test_read_unclosed_list(self):
-        self.assertRaises(UnexpectedEofException,
-                          lambda: self._read_object("("))
+        self.assertRaises(EOF, lambda: self._read_object("("))
 
     def test_read_unbalanced_delimiter(self):
-        self.assertRaises(UnbalancedDelimiterException,
-                          lambda: self._read_object(")"))
+        self.assertRaises(UnbalancedDelimiter, lambda: self._read_object(")"))
 
     def test_read_empty_list(self):
         obj = self._read_object('()')

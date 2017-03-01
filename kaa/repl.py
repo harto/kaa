@@ -1,6 +1,6 @@
 from kaa import formatter, string
 from kaa.charbuf import CharBuffer
-from kaa.reader import Reader, UnexpectedEofException
+from kaa.reader import Reader, EOF
 import re
 import traceback
 
@@ -46,5 +46,5 @@ class Repl(object):
                 # eagerly evaluate the expression generator
                 # to flush out unexpected EOF
                 return list(Reader().read_all(buf))
-            except UnexpectedEofException:
+            except EOF:
                 s += '\n' + input(self.PROMPT_2)

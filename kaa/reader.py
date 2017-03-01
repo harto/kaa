@@ -22,7 +22,7 @@ class Reader(object):
     def read(self, chars):
         if chars.eof():
             if self.list_depth > 0:
-                raise UnexpectedEofException()
+                raise EOF()
             return None
         c = chars.pop()
         if c.isspace():
@@ -41,7 +41,7 @@ class Reader(object):
             return self._read_list(chars)
         elif c == ')':
             if self.list_depth == 0:
-                raise UnbalancedDelimiterException(
+                raise UnbalancedDelimiter(
                     'unbalanced delimiter %s at %s' % (c, chars.source_meta()))
             else:
                 return self.EOLIST
@@ -81,7 +81,7 @@ class Reader(object):
         try:
             return string.read(chars.unpop())
         except string.UnterminatedStringException as e:
-            raise UnexpectedEofException(e)
+            raise EOF(e)
 
     def _read_atom(self, first_char, chars):
         meta = {'source': chars.source_meta()}
@@ -95,8 +95,8 @@ class Reader(object):
         else:
             return Symbol(token, meta)
 
-class UnbalancedDelimiterException(Exception): pass
-class UnexpectedEofException(Exception): pass
+class UnbalancedDelimiter(Exception): pass
+class EOF(Exception): pass
 
 # References:
 #  - http://axisofeval.blogspot.com/2013/04/a-quasiquote-i-can-understand.html
