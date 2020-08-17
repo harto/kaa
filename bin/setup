@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")"/..
+python -m venv venv
+venv/bin/python setup.py develop
+venv/bin/pip install -U pip
+venv/bin/pip install -r requirements-dev.txt
