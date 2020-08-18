@@ -1,12 +1,15 @@
 import re
 
+from kaa.charbuf import CharBuffer
 from kaa.core import empty, first, is_list, rest, List, Symbol
-from kaa.string import read_str, UnterminatedString
 
 
 EOLIST = object()
-ATOM = re.compile(r'[^\s\(\)]+')
-INTEGER = re.compile(r'[+-]?[0-9]+')
+
+
+def read(s):
+    "Convenience method for reading a single object from a string."
+    return Reader().read_next(CharBuffer(s))
 
 
 class Reader:
@@ -15,25 +18,26 @@ class Reader:
 
     def read_all(self, chars):
         while True:
-            obj = self.read(chars)
+            obj = self.read_next(chars)
             if obj is None:
                 break
             yield obj
 
-    def read(self, chars):  # pylint: disable=too-many-branches,too-many-return-statements
+    def read_next(self, chars):  # pylint: disable=too-many-branches,too-many-return-statements
+        "Reads next form from given char buffer."
         if chars.eof():
             if self.list_depth > 0:
-                raise EOF()
+                raise EOF()  # TODO: should this return UnbalancedDelimiter?
             return None
         c = chars.pop()
         if c.isspace():
             while chars.peek() and chars.peek().isspace():
                 chars.pop()
-            return self.read(chars)
+            return self.read_next(chars)
         if c == ';':
             while chars.peek():
                 chars.pop()
-            return self.read(chars)
+            return self.read_next(chars)
         if c == "'":
             return self._read_quote(chars)
         if c == '`':
@@ -53,27 +57,28 @@ class Reader:
 
     def _read_quote(self, chars):
         return List([Symbol('quote', {'source': chars.source_meta()}),
-                     self.read(chars)])
+                     self.read_next(chars)])
 
     def _read_quasiquote(self, chars):
-        return _process_quasiquote(self.read(chars))
+        return _process_quasiquote(self.read_next(chars))
 
     def _read_unquote(self, chars):
         if chars.peek() == '@':
             chars.pop()
             return List([Symbol('unquote-splice', {'source': chars.source_meta()}),
-                         self.read(chars)])
+                         self.read_next(chars)])
 
         return List([Symbol('unquote', {'source': chars.source_meta()}),
-                     self.read(chars)])
+                     self.read_next(chars)])
 
     def _read_list(self, chars):
         l = List(meta={'source': chars.source_meta()})
         self.list_depth += 1
-        for obj in self.read_all(chars):
-            if obj == EOLIST:
+        while True:
+            form = self.read_next(chars)
+            if form == EOLIST:
                 break
-            l.append(obj)
+            l.append(form)
         self.list_depth -= 1
         return l
 
@@ -83,6 +88,49 @@ def _read_string(chars):
         return read_str(chars.unpop())
     except UnterminatedString as ex:
         raise EOF(ex)
+
+
+STRING_ESCAPE_SEQUENCES = {
+    '\\\\': r'\\',
+    '\\"': '"',
+    '\\n': '\n',
+    '\\t': '\t',
+}
+
+
+def read_str(chars):
+    s = []
+    assert chars.peek() == '"'
+    chars.pop()
+    while chars.peek():
+        c = chars.pop()
+        if c == '"':
+            #raise Exception('finishing with %s' % ''.join(s))
+            return ''.join(s)
+        if c == '\\':
+            if not chars.peek():
+                # EOF
+                break
+            escape_sequence = c + chars.pop()
+            try:
+                s.append(STRING_ESCAPE_SEQUENCES[escape_sequence])
+            except KeyError:
+                raise InvalidEscapeSequence(escape_sequence)
+        else:
+            s.append(c)
+    raise UnterminatedString()
+
+
+class InvalidEscapeSequence(Exception):
+    pass
+
+
+class UnterminatedString(Exception):
+    pass
+
+
+ATOM = re.compile(r'[^\s\(\)]+')
+INTEGER = re.compile(r'[+-]?[0-9]+')
 
 
 def _read_atom(first_char, chars):

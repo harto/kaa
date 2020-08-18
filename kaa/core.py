@@ -1,10 +1,11 @@
 from functools import reduce
-
-from kaa.string import format_str
+import json
 
 
 def serialize(val):
-    return format_str(val) if isinstance(val, str) else repr(val)
+    # We don't use repr(s), because that sometimes results in single-quoted
+    # strings. We always want double-quoted strings.
+    return json.dumps(val) if isinstance(val, str) else repr(val)
 
 
 class List:

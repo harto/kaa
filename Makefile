@@ -5,7 +5,7 @@ all: venv
 check: lint test
 
 lint: | venv
-	venv/bin/pylint kaa # test/*.py
+	venv/bin/pylint kaa test/*.py
 
 test: | venv
 	source venv/bin/activate && bin/test

@@ -437,9 +437,10 @@ good-names=i,
            _,
            c,  # char
            f,  # file
-           s,  # string
+           fn, # function
+           l,  # list
            ns, # namespace
-           l   # list
+           s   # string
 
 # Good variable names regexes, separated by a comma. If names match any regex,
 # they will always be accepted
