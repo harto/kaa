@@ -2,13 +2,8 @@
 set -e
 cd "$(dirname "$0")"/..
 
-echo "=================="
-echo "Running unit tests"
-echo "=================="
+echo 'Running unit tests'
 python -m unittest discover -s test
 
-echo
-echo "===================="
-echo "Running system tests"
-echo "===================="
+echo 'Running system tests'
 python -m kaa.main test/test.lisp

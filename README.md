@@ -12,7 +12,8 @@ Development
 -----------
 
 ```console
-bin/setup
+make        # initial setup
+make check  # run linter, test suite
 ```
 
 
@@ -20,8 +21,8 @@ Usage
 -----
 
 ```console
-kaa                                # boot a REPL
-kaa some-file.lisp                 # eval a source file
-kaa --expression='(print (+ 1 2))' # eval a single expression
-echo '(print (+ 1 2))' | kaa       # eval lines from stdin
+kaa                                 # boot a REPL
+kaa some-file.lisp                  # eval a source file
+kaa --expression='(print (+ 1 2))'  # eval a single expression
+echo '(print (+ 1 2))' | kaa        # eval lines from stdin
 ```
