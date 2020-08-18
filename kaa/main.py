@@ -1,9 +1,11 @@
-from kaa.runtime import Runtime
 import argparse
 import sys
 
-def boot():
+from kaa.repl import Repl
+from kaa.runtime import Runtime
 
+
+def boot():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('paths',
@@ -26,11 +28,11 @@ def boot():
             runtime.eval_file(path)
 
     elif sys.stdin.isatty():
-        from .repl import Repl
         Repl(runtime).loop()
 
     else:
         runtime.eval_lines(sys.stdin)
+
 
 if __name__ == '__main__':
     boot()

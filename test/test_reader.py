@@ -3,6 +3,7 @@ from kaa.charbuf import CharBuffer, LineIterCharBuffer
 from kaa.reader import *
 from unittest import TestCase
 
+
 class ReaderTest(TestCase):
 
     def test_read_int(self):

@@ -1,29 +1,34 @@
-# fixme: figure out where to put this
-def eval(expr, ns):
+from kaa.core import List, Symbol
+
+
+# FIXME: figure out where to put this
+def evaluate(expr, ns):
+    # FIXME: this belongs in some compilation phase, not eval
     expr = maybe_eval_special_form(expr)
 
-    if isinstance(expr, List) and len(expr):
+    if isinstance(expr, List) and expr:
         return invoke(expr, ns)
-    elif hasattr(expr, 'eval'):
+    if hasattr(expr, 'eval'):
         return expr.eval(ns)
-    else:
-        # native Python type
-        return expr
+    # native Python type
+    return expr
 
-def invoke(L, ns):
-    first = eval(L[0], ns)
-    rest = L[1:]
+
+def invoke(form, ns):
+    first = evaluate(form[0], ns)
+    rest = form[1:]
 
     if isinstance(first, Macro):
         expansion = first(ns, *rest)
-        return eval(expansion, ns)
+        return evaluate(expansion, ns)
 
-    args = [eval(expr, ns) for expr in rest]
+    args = [evaluate(expr, ns) for expr in rest]
     if isinstance(first, Lambda):
         return first(ns, *args)
-    else:
-        # assume Python callable
-        return first(*args)
+
+    # assume Python callable
+    return first(*args)
+
 
 def maybe_eval_special_form(expr):
     if not (isinstance(expr, List) and len(expr) and isinstance(expr[0], Symbol)):
@@ -42,5 +47,6 @@ def maybe_eval_special_form(expr):
         return expr
     return handler(expr)
 
-from kaa.special_forms import *
-from kaa.core import List, Symbol
+
+# FIXME: these are here because of a circular dependency
+from kaa.special_forms import Def, Macro, If, Lambda, Raise, Quote, Try  # pylint: disable=cyclic-import,wrong-import-position

@@ -1,11 +1,12 @@
-from . import evaluator, core
+import os.path
+
+from kaa import evaluator, core
 from kaa.charbuf import CharBuffer, FileCharBuffer, LineIterCharBuffer
 from kaa.ns import Namespace
 from kaa.reader import Reader
-from os import path
 
-class Runtime(object):
 
+class Runtime:
     def __init__(self):
         self.ns = Namespace()
         self._load_core()
@@ -13,7 +14,7 @@ class Runtime(object):
     def _load_core(self):
         for name, value in core.builtins().items():
             self.ns.define_global(name, value)
-        self.eval_file(path.join(path.dirname(__file__), 'core.lisp'))
+        self.eval_file(os.path.join(os.path.dirname(__file__), 'core.lisp'))
 
     def eval_file(self, path):
         with open(path) as f:
@@ -28,5 +29,5 @@ class Runtime(object):
     def eval_all(self, exprs):
         result = None
         for expr in exprs:
-            result = evaluator.eval(expr, self.ns)
+            result = evaluator.evaluate(expr, self.ns)
         return result

@@ -1,5 +1,6 @@
-from kaa.charbuf import CharBuffer, EmptyBufferException, LineIterCharBuffer
+from kaa.charbuf import CharBuffer, EmptyBuffer, LineIterCharBuffer
 from unittest import TestCase
+
 
 class CharBufferTest(TestCase):
 
@@ -19,7 +20,8 @@ class CharBufferTest(TestCase):
     def test_pop(self):
         buf = CharBuffer('a')
         self.assertEqual('a', buf.pop())
-        self.assertRaises(EmptyBufferException, lambda: buf.pop())
+        self.assertRaises(EmptyBuffer, lambda: buf.pop())
+
 
 class LineIterCharBufferTest(TestCase):
 
@@ -42,4 +44,4 @@ class LineIterCharBufferTest(TestCase):
         self.assertEqual('a', buf.pop())
         self.assertEqual('b', buf.pop())
         self.assertEqual('c', buf.pop())
-        self.assertRaises(EmptyBufferException, lambda: buf.pop())
+        self.assertRaises(EmptyBuffer, lambda: buf.pop())

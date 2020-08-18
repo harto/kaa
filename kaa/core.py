@@ -1,15 +1,19 @@
-from kaa import formatter
-from kaa.evaluator import eval
 from functools import reduce
 
-class List(object):
+from kaa.string import format_str
 
-    def __init__(self, members = None, meta = None):
+
+def serialize(val):
+    return format_str(val) if isinstance(val, str) else repr(val)
+
+
+class List:
+    def __init__(self, members=None, meta=None):
         self.members = members or []
         self.meta = meta or {}
 
     def __eq__(self, other):
-        return type(other) == type(self) \
+        return isinstance(other, List) \
             and list(other.members) == list(self.members)
 
     def __getitem__(self, i):
@@ -19,37 +23,38 @@ class List(object):
         return len(self.members)
 
     def __str__(self):
-        return '(%s)' % ' '.join(map(formatter.format, self.members))
+        return '(%s)' % ' '.join(map(str, self.members))
 
-    def append(self, x):
-        self.members.append(x)
+    def __repr__(self):
+        return '(%s)' % ' '.join(map(serialize, self.members))
+
+    def append(self, item):
+        self.members.append(item)
 
     def empty(self):
-        return len(self) == 0
+        return not self.members
 
-    def eval(self, ns):
+    def eval(self, _ns):
         return self
 
     def first(self):
-        if not self.empty():
-            return self.members[0]
+        return None if self.empty() else self.members[0]
 
     def rest(self):
-        if len(self.members) > 1:
-            return List(self.members[1:])
+        return List(self.members[1:]) if len(self) > 1 else None
 
-class Symbol(object):
 
-    def __init__(self, name, meta = None):
+class Symbol:
+    def __init__(self, name, meta=None):
         self.name = name
         self.meta = meta or {}
 
     def __eq__(self, other):
-        return type(other) == type(self) \
+        return isinstance(other, Symbol) \
             and other.name == self.name
 
     def __ne__(self, other):
-        return not (self == other)
+        return not self == other
 
     def __hash__(self):
         return hash(self.name)
@@ -57,14 +62,17 @@ class Symbol(object):
     def __str__(self):
         return self.name
 
+    def __repr__(self):
+        return self.name
+
     def eval(self, ns):
         try:
             return ns[self.name]
         except KeyError:
-            raise UnboundSymbolException(self)
+            raise UnboundSymbol(self)
 
-class UnboundSymbolException(Exception):
 
+class UnboundSymbol(Exception):
     def __init__(self, sym):
         try:
             msg = '%s at %s' % (sym.name, sym.meta['source'])
@@ -72,49 +80,77 @@ class UnboundSymbolException(Exception):
             msg = sym.name
         Exception.__init__(self, msg)
 
+
 def concat(*Ls):
+    # return List(reduce(lambda x, y: (x and x.members or []) + (y and y.members or []),
+    #                    colls))
     return reduce(lambda x, y: List((x and list(x.members) or []) +
                                     (y and list(y.members) or [])),
                   Ls)
 
-def empty(L):
-    return L.empty()
 
-def is_list(x):
-    return isinstance(x, List)
 
-def is_symbol(x):
-    return isinstance(x, Symbol)
+def empty(coll):
+    return coll.empty()
 
-def list_(*xs):
-    return List(xs)
 
-def first(L):
-    return is_list(L) and L.first() or None
+def is_list(val):
+    return isinstance(val, List)
+
+
+def is_symbol(val):
+    return isinstance(val, Symbol)
+
+
+def list_(*items):
+    return List(items)
+
+
+def first(coll):
+    try:
+        return coll.first()
+    except AttributeError:
+        return None
+
 
 def not_(val):
     return not val
 
-def print_(*xs):
-    print(str_(*xs))
 
-def rest(L):
-    return is_list(L) and L.rest() or None
+def print_(*vals):
+    print(*(str(v) for v in vals), sep=' ', end='')
 
-def str_(*xs):
-    return ''.join(map(str, xs))
+
+def println(*vals):
+    print(*(str(v) for v in vals), sep=' ')
+
+
+def rest(coll):
+    try:
+        return coll.rest()
+    except AttributeError:
+        return None
+
+
+def str_(*vals):
+    return ''.join(map(str, vals))
+
 
 def symbol(name):
     return Symbol(str(name))
 
+
 def add(*xs):
     return reduce(lambda acc, x: acc + x, xs, 0)
+
 
 def eql(*xs):
     return all(x == xs[0] for x in xs)
 
+
 def mul(*xs):
     return reduce(lambda acc, x: acc * x, xs, 1)
+
 
 def builtins():
     return {'True': True,
@@ -130,6 +166,7 @@ def builtins():
             'list?': is_list,
             'not': not_,
             'print': print_,
+            'println': println,
             'rest': rest,
             'str': str_,
             'symbol': symbol,

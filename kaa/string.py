@@ -1,6 +1,8 @@
 from collections import OrderedDict
+import json
 
-def read(chars):
+
+def read_str(chars):
     s = []
     assert chars.peek() == '"'
     chars.pop()
@@ -9,7 +11,7 @@ def read(chars):
         if c == '"':
             #raise Exception('finishing with %s' % ''.join(s))
             return ''.join(s)
-        elif c == '\\':
+        if c == '\\':
             if not chars.peek():
                 # EOF
                 break
@@ -20,12 +22,14 @@ def read(chars):
                 raise InvalidEscapeSequence(escape_sequence)
         else:
             s.append(c)
-    raise UnterminatedStringException()
+    raise UnterminatedString()
 
-def format(s):
-    for k, v in STRING_ESCAPE_SEQUENCES.items():
-        s = s.replace(v, k)
-    return '"%s"' % s
+
+def format_str(s):
+    # We don't use repr(s), because that sometimes results in single-quoted
+    # strings. We always want double-quoted strings.
+    return json.dumps(s)
+
 
 STRING_ESCAPE_SEQUENCES = OrderedDict((
     # Order is important for formatting strings (e.g. in REPL); backslashes
@@ -36,5 +40,10 @@ STRING_ESCAPE_SEQUENCES = OrderedDict((
     ('\\t', '\t'),
 ))
 
-class InvalidEscapeSequence(Exception): pass
-class UnterminatedStringException(Exception): pass
+
+class InvalidEscapeSequence(Exception):
+    pass
+
+
+class UnterminatedString(Exception):
+    pass

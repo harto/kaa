@@ -1,14 +1,15 @@
-from kaa import string
-from kaa.core import empty, first, is_list, rest, List, Symbol
 import re
 
-class Reader(object):
+from kaa.core import empty, first, is_list, rest, List, Symbol
+from kaa.string import read_str, UnterminatedString
 
-    EOLIST = object()
 
-    ATOM = re.compile(r'[^\s\(\)]+')
-    INTEGER = re.compile(r'[+-]?[0-9]+')
+EOLIST = object()
+ATOM = re.compile(r'[^\s\(\)]+')
+INTEGER = re.compile(r'[+-]?[0-9]+')
 
+
+class Reader:
     def __init__(self):
         self.list_depth = 0
 
@@ -16,39 +17,39 @@ class Reader(object):
         while True:
             obj = self.read(chars)
             if obj is None:
-                raise StopIteration
+                break
             yield obj
 
-    def read(self, chars):
+    def read(self, chars):  # pylint: disable=too-many-branches,too-many-return-statements
         if chars.eof():
             if self.list_depth > 0:
                 raise EOF()
             return None
         c = chars.pop()
         if c.isspace():
-            while chars.peek() and chars.peek().isspace(): chars.pop()
+            while chars.peek() and chars.peek().isspace():
+                chars.pop()
             return self.read(chars)
-        elif c == ';':
-            while chars.peek(): chars.pop()
+        if c == ';':
+            while chars.peek():
+                chars.pop()
             return self.read(chars)
-        elif c == "'":
+        if c == "'":
             return self._read_quote(chars)
-        elif c == '`':
+        if c == '`':
             return self._read_quasiquote(chars)
-        elif c == '~':
+        if c == '~':
             return self._read_unquote(chars)
-        elif c == '(':
+        if c == '(':
             return self._read_list(chars)
-        elif c == ')':
+        if c == ')':
             if self.list_depth == 0:
                 raise UnbalancedDelimiter(
                     'unbalanced delimiter %s at %s' % (c, chars.source_meta()))
-            else:
-                return self.EOLIST
-        elif c == '"':
-            return self._read_string(chars)
-        else:
-            return self._read_atom(c, chars)
+            return EOLIST
+        if c == '"':
+            return _read_string(chars)
+        return _read_atom(c, chars)
 
     def _read_quote(self, chars):
         return List([Symbol('quote', {'source': chars.source_meta()}),
@@ -62,45 +63,52 @@ class Reader(object):
             chars.pop()
             return List([Symbol('unquote-splice', {'source': chars.source_meta()}),
                          self.read(chars)])
-        else:
-            return List([Symbol('unquote', {'source': chars.source_meta()}),
-                         self.read(chars)])
+
+        return List([Symbol('unquote', {'source': chars.source_meta()}),
+                     self.read(chars)])
 
     def _read_list(self, chars):
-        L = List()
-        L.meta = {'source': chars.source_meta()}
+        l = List(meta={'source': chars.source_meta()})
         self.list_depth += 1
         for obj in self.read_all(chars):
-            if obj == self.EOLIST:
+            if obj == EOLIST:
                 break
-            L.append(obj)
+            l.append(obj)
         self.list_depth -= 1
-        return L
+        return l
 
-    def _read_string(self, chars):
-        try:
-            return string.read(chars.unpop())
-        except string.UnterminatedStringException as e:
-            raise EOF(e)
 
-    def _read_atom(self, first_char, chars):
-        meta = {'source': chars.source_meta()}
-        token = first_char
-        while chars.peek() and self.ATOM.match(chars.peek()):
-            token += chars.pop()
-        if self.INTEGER.match(token):
-            return int(token)
-        elif token.startswith('py/'):
-            return eval(token[3:])
-        else:
-            return Symbol(token, meta)
+def _read_string(chars):
+    try:
+        return read_str(chars.unpop())
+    except UnterminatedString as ex:
+        raise EOF(ex)
 
-class UnbalancedDelimiter(Exception): pass
-class EOF(Exception): pass
+
+def _read_atom(first_char, chars):
+    meta = {'source': chars.source_meta()}
+    token = first_char
+    while chars.peek() and ATOM.match(chars.peek()):
+        token += chars.pop()
+    if INTEGER.match(token):
+        return int(token)
+    if token.startswith('py/'):
+        return eval(token[3:]) # pylint: disable=eval-used
+    return Symbol(token, meta)
+
+
+class UnbalancedDelimiter(Exception):
+    pass
+
+
+class EOF(Exception):
+    pass
+
 
 # References:
 #  - http://axisofeval.blogspot.com/2013/04/a-quasiquote-i-can-understand.html
 #  - Clojure
+
 
 def _process_quasiquote(obj):
     # `a -> 'a
@@ -113,10 +121,10 @@ def _process_quasiquote(obj):
     return List([Symbol('concat')] +
                 [_process_quasiquote_list_item(o) for o in obj])
 
+
 def _process_quasiquote_list_item(obj):
     if first(obj) == Symbol('unquote'):
         return List([Symbol('list'), first(rest(obj))])
-    elif first(obj) == Symbol('unquote-splice'):
+    if first(obj) == Symbol('unquote-splice'):
         return first(rest(obj))
-    else:
-        return List([Symbol('list'), _process_quasiquote(obj)])
+    return List([Symbol('list'), _process_quasiquote(obj)])

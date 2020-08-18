@@ -1,6 +1,5 @@
-class Namespace(object):
-
-    def __init__(self, bindings = None, parent = None):
+class Namespace:
+    def __init__(self, bindings=None, parent=None):
         self.bindings = bindings or {}
         self.parent = parent
 
@@ -14,15 +13,13 @@ class Namespace(object):
         except KeyError:
             if self.parent:
                 return self.parent[k]
-            else:
-                raise
+            raise
 
-    def define_global(self, k, v):
+    def define_global(self, name, val):
         if self.parent:
-            return self.parent.define_global(k, v)
-        else:
-            self.bindings[k] = v
-            return v
+            return self.parent.define_global(name, val)
+        self.bindings[name] = val
+        return val
 
-    def push(self, bindings = None):
+    def push(self, bindings=None):
         return Namespace(bindings=bindings, parent=self)

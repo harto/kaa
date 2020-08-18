@@ -1,7 +1,10 @@
+from kaa.charbuf import CharBuffer
+from kaa.reader import Reader
 from kaa.core import List, Symbol
 from kaa.ns import Namespace
 from kaa.special_forms import *
 from unittest import TestCase
+
 
 class DefTest(TestCase):
 
@@ -22,6 +25,7 @@ class DefTest(TestCase):
         self.assertEqual(result, 42)
         self.assertEqual(result, ns['x'])
 
+
 class LambdaTest(TestCase):
 
     def test_parse(self):
@@ -34,24 +38,27 @@ class LambdaTest(TestCase):
 
     def test_call_produces_expected_result(self):
         lam = Lambda.parse(List([Symbol('lambda'),
-                                  List([Symbol('x'), Symbol('y')]),
-                                  List([lambda a, b: a + b,
-                                        Symbol('x'),
-                                        Symbol('y')])]))
+                                 List([Symbol('x'), Symbol('y')]),
+                                 List([lambda a, b: a + b,
+                                       Symbol('x'),
+                                       Symbol('y')])]))
         self.assertEqual(3, lam(Namespace(), 1, 2))
 
     def test_call_with_invalid_arity(self):
         lam = Lambda.parse(read('(lambda ())'))
         self.assertRaises(ArityException, lambda: lam(Namespace(), 'foo'))
 
+
 class RaiseTest(TestCase):
 
     def test_raises_exception(self):
-        class ExampleException(Exception): pass
+        class ExampleException(Exception):
+            pass
         r = Raise(ExampleException('oh no'))
         self.assertRaises(ExampleException, lambda: r.eval(Namespace()))
         r = Raise('oh no')
         self.assertRaises(Exception, lambda: r.eval(Namespace()))
+
 
 class QuoteTest(TestCase):
 
@@ -60,8 +67,6 @@ class QuoteTest(TestCase):
         quote = Quote(expr)
         self.assertEqual(expr, quote.eval(Namespace()))
 
-from kaa.charbuf import CharBuffer
-from kaa.reader import Reader
 
 def read(s):
     return Reader().read(CharBuffer(s))

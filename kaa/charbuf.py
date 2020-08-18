@@ -1,8 +1,7 @@
 # todo: fix source meta in repl
 # todo: consolidate different buffer types, including repl
 
-class CharBuffer(object):
-
+class CharBuffer:
     def __init__(self, s):
         self.s = s
         self.line_num = 1
@@ -12,15 +11,12 @@ class CharBuffer(object):
         return self.col >= len(self.s)
 
     def peek(self):
-        if self.eof():
-            return None
-        else:
-            return self.s[self.col]
+        return None if self.eof() else self.s[self.col]
 
     def pop(self):
         c = self.peek()
         if not c:
-            raise EmptyBufferException()
+            raise EmptyBuffer()
         self.col += 1
         return c
 
@@ -33,8 +29,8 @@ class CharBuffer(object):
     def source_meta(self):
         return SourceMeta(self.col - 1, self.line_num)
 
-class LineIterCharBuffer(object):
 
+class LineIterCharBuffer:
     def __init__(self, lines):
         self.lines = iter(lines)
         self.line_num = 1
@@ -48,22 +44,20 @@ class LineIterCharBuffer(object):
     def peek(self):
         if self.eof():
             return None
-        elif self.line:
+        if self.line:
             return self.line.peek()
-        else:
-            return self.next_line.peek()
+        return self.next_line.peek()
 
     def pop(self):
         if self.eof():
-            raise EmptyBufferException()
+            raise EmptyBuffer()
         c = self.line.peek()
         if c:
             return self.line.pop()
-        else:
-            self.line = self.next_line
-            self.next_line = self._pop_line()
-            self.line_num += 1
-            return self.pop()
+        self.line = self.next_line
+        self.next_line = self._pop_line()
+        self.line_num += 1
+        return self.pop()
 
     def unpop(self):
         self.line.unpop()
@@ -80,8 +74,8 @@ class LineIterCharBuffer(object):
         line_meta = self.line.source_meta()
         return SourceMeta(line_meta.col, self.line_num)
 
-class FileCharBuffer(LineIterCharBuffer):
 
+class FileCharBuffer(LineIterCharBuffer):
     def __init__(self, f):
         LineIterCharBuffer.__init__(self, f)
         self.path = f.name
@@ -91,11 +85,13 @@ class FileCharBuffer(LineIterCharBuffer):
         meta.filename = self.path
         return meta
 
-class EmptyBufferException(Exception): pass
 
-class SourceMeta(object):
+class EmptyBuffer(Exception):
+    pass
 
-    def __init__(self, col, line = None, filename = '<none>'):
+
+class SourceMeta:
+    def __init__(self, col, line=None, filename='<none>'):
         self.line = line
         self.col = col
         self.filename = filename
