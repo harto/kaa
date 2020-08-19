@@ -3,46 +3,24 @@ import json
 
 
 def serialize(val):
-    # We don't use repr(s), because that sometimes results in single-quoted
-    # strings. We always want double-quoted strings.
+    # We don't use repr to serialize strings, because that sometimes results in
+    # single quotes. We always want double-quoted strings.
     return json.dumps(val) if isinstance(val, str) else repr(val)
 
 
-class List:
-    def __init__(self, members=None, meta=None):
-        self.members = members or []
+class List(list):
+    def __init__(self, items=(), meta=None):
+        super().__init__(items)
         self.meta = meta or {}
 
-    def __eq__(self, other):
-        return isinstance(other, List) \
-            and list(other.members) == list(self.members)
-
-    def __getitem__(self, i):
-        return self.members[i]
-
-    def __len__(self):
-        return len(self.members)
-
     def __str__(self):
-        return '(%s)' % ' '.join(map(str, self.members))
+        return '(%s)' % ' '.join(map(str, self))
 
     def __repr__(self):
-        return '(%s)' % ' '.join(map(serialize, self.members))
-
-    def append(self, item):
-        self.members.append(item)
-
-    def empty(self):
-        return not self.members
+        return '(%s)' % ' '.join(map(serialize, self))
 
     def eval(self, _ns):
         return self
-
-    def first(self):
-        return None if self.empty() else self.members[0]
-
-    def rest(self):
-        return List(self.members[1:]) if len(self) > 1 else None
 
 
 class Symbol:
@@ -82,17 +60,19 @@ class UnboundSymbol(Exception):
         Exception.__init__(self, msg)
 
 
-def concat(*Ls):
-    # return List(reduce(lambda x, y: (x and x.members or []) + (y and y.members or []),
-    #                    colls))
-    return reduce(lambda x, y: List((x and list(x.members) or []) +
-                                    (y and list(y.members) or [])),
-                  Ls)
+def concat(*lists):
+    return reduce(lambda x, y: List((x or []) + (y or [])), lists)
 
 
 
-def empty(coll):
-    return coll.empty()
+def empty(val):
+    try:
+        next(iter(val))
+    except StopIteration:
+        return True
+    except TypeError:
+        return False
+    return False
 
 
 def is_list(val):
@@ -107,10 +87,10 @@ def list_(*items):
     return List(items)
 
 
-def first(coll):
+def first(val):
     try:
-        return coll.first()
-    except AttributeError:
+        return next(iter(val))
+    except (StopIteration, TypeError):
         return None
 
 
@@ -126,11 +106,10 @@ def println(*vals):
     print(*(str(v) for v in vals), sep=' ')
 
 
-def rest(coll):
-    try:
-        return coll.rest()
-    except AttributeError:
-        return None
+def rest(val):
+    if isinstance(val, List):
+        return List(val[1:])
+    raise ValueError(f"can't get rest of {type(val)}")
 
 
 def str_(*vals):
@@ -162,6 +141,7 @@ def builtins():
             '*': mul,
             'concat': concat,
             'count': len,
+            'empty': empty,
             'first': first,
             'list': list_,
             'list?': is_list,
