@@ -2,8 +2,8 @@ from pytest import raises
 
 from kaa.core import List, Symbol
 from kaa.env import Environment
+from kaa.evaluator import ArityException, CompilationException, Def, Lambda, Quote, Raise
 from kaa.reader import read
-from kaa.special_forms import ArityException, CompilationException, Def, Lambda, Quote, Raise
 
 
 def test_parse_def():
