@@ -1,6 +1,7 @@
 import os.path
 
-from kaa import evaluator, core
+from kaa.core import builtins
+from kaa.evaluator import evaluate
 from kaa.ns import Namespace
 from kaa.reader import Reader
 from kaa.stream import CharStream, FileStream, MultilineStream
@@ -9,10 +10,10 @@ from kaa.stream import CharStream, FileStream, MultilineStream
 class Runtime:
     def __init__(self):
         self.ns = Namespace()
-        self._load_core()
+        self.bootstrap()
 
-    def _load_core(self):
-        for name, value in core.builtins().items():
+    def bootstrap(self):
+        for name, value in builtins().items():
             self.ns.define_global(name, value)
         self.eval_file(os.path.join(os.path.dirname(__file__), 'core.lisp'))
 
@@ -29,5 +30,5 @@ class Runtime:
     def eval_all(self, exprs):
         result = None
         for expr in exprs:
-            result = evaluator.evaluate(expr, self.ns)
+            result = evaluate(expr, self.ns)
         return result
