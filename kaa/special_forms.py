@@ -117,14 +117,14 @@ class Params:
 
     def bind(self, args):
         self._check_arity(args)
-        bound = dict(zip(self.required_names, args))
-        bound.update(dict(zip(self.optional_names,
-                              itertools.chain(args[len(self.required_names):],
-                                              itertools.repeat(None)))))
+        bindings = dict(zip(self.required_names, args))
+        bindings.update(dict(zip(self.optional_names,
+                                 itertools.chain(args[len(self.required_names):],
+                                                 itertools.repeat(None)))))
         if self.rest_name:
             num_consumed = len(self.required_names) + len(self.optional_names)
-            bound[self.rest_name] = List(args[num_consumed:])
-        return bound
+            bindings[self.rest_name] = List(args[num_consumed:])
+        return bindings
 
     def _describe_arity(self):
         if self.max_arity == float('inf'):
