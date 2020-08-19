@@ -1,3 +1,5 @@
+(print "running test.lisp ")
+
 ;; (assert (= 5 (+ 2 2)))
 (defmacro test (expr)
   `(do
@@ -8,6 +10,16 @@
 (test (= 21
          (* (+ 1 2)
             (+ 3 4))))
+
+;; with blank lines
+(test (= 3
+         (+ 1
+
+            1
+
+   ;; hi
+
+            1)))
 
 ;; def
 (def foo 42)
@@ -74,6 +86,4 @@
 (test (= "foo" (or "foo")))
 (test (= "bar" (or False "bar" (raise "should be unreachable"))))
 
-(println)
-(println)
-(println "OK")
+(println " done")

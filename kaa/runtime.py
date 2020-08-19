@@ -1,9 +1,9 @@
 import os.path
 
 from kaa import evaluator, core
-from kaa.charbuf import CharBuffer, FileCharBuffer, LineIterCharBuffer
 from kaa.ns import Namespace
 from kaa.reader import Reader
+from kaa.stream import CharStream, FileStream, MultilineStream
 
 
 class Runtime:
@@ -18,13 +18,13 @@ class Runtime:
 
     def eval_file(self, path):
         with open(path) as f:
-            return self.eval_all(Reader().read_all(FileCharBuffer(f)))
+            return self.eval_all(Reader().read_all(FileStream(f)))
 
     def eval_lines(self, lines):
-        return self.eval_all(Reader().read_all(LineIterCharBuffer(lines)))
+        return self.eval_all(Reader().read_all(MultilineStream(lines)))
 
     def eval_string(self, s):
-        return self.eval_all(Reader().read_all(CharBuffer(s)))
+        return self.eval_all(Reader().read_all(CharStream(s)))
 
     def eval_all(self, exprs):
         result = None

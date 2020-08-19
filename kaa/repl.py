@@ -1,8 +1,8 @@
 import traceback
 
-from kaa.charbuf import CharBuffer
 from kaa.core import serialize
 from kaa.reader import Reader, EOF
+from kaa.stream import CharStream
 
 
 PROMPT_1 = '=> '
@@ -44,7 +44,7 @@ class Repl:
 def _read_exprs():
     s = input(PROMPT_1)
     while True:
-        line = CharBuffer(s)
+        line = CharStream(s)
         try:
             # eagerly evaluate the expression generator
             # to flush out unexpected EOF

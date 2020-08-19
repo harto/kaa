@@ -1,8 +1,8 @@
 from pytest import raises
 
 from kaa.core import List, Symbol
-from kaa.charbuf import LineIterCharBuffer
 from kaa.reader import EOF, InvalidEscapeSequence, read, Reader, UnbalancedDelimiter
+from kaa.stream import MultilineStream
 
 
 def test_read_int():
@@ -60,7 +60,7 @@ def test_read_python_builtin():
 
 
 def test_source_meta():
-    lines = LineIterCharBuffer(('(foo', '  (bar))'))
+    lines = MultilineStream(('(foo', '  (bar))'))
     obj = Reader().read_next(lines)
     assert obj.meta['source'].line == 1
     assert obj.meta['source'].col == 0
