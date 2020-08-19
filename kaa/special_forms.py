@@ -4,10 +4,10 @@ import sys
 from kaa.core import is_list, is_symbol, List, Symbol
 
 
-def eval_all(exprs, ns):
+def eval_all(exprs, env):
     result = None
     for expr in exprs:
-        result = evaluate(expr, ns)
+        result = evaluate(expr, env)
     return result
 
 
@@ -26,8 +26,8 @@ class Def:
         self.symbol = symbol
         self.value = value
 
-    def eval(self, ns):
-        return ns.define_global(self.symbol.name, evaluate(self.value, ns))
+    def eval(self, env):
+        return env.define_global(self.symbol.name, evaluate(self.value, env))
 
 
 class If:
@@ -42,11 +42,11 @@ class If:
         self.then = then
         self.else_ = else_
 
-    def eval(self, ns):
-        if evaluate(self.cond, ns):
-            return evaluate(self.then, ns)
+    def eval(self, env):
+        if evaluate(self.cond, env):
+            return evaluate(self.then, env)
         if self.else_:
-            return evaluate(self.else_, ns)
+            return evaluate(self.else_, env)
         return None
 
 
@@ -64,16 +64,16 @@ class Lambda:
         self.body = body
         self.lexical_env = None
 
-    def __call__(self, ns, *args):
+    def __call__(self, env, *args):
         if self.lexical_env:
-            ns = ns.push(self.lexical_env)
-        ns = ns.push(self.params.bind(args))
-        return eval_all(self.body, ns)
+            env = env.push(self.lexical_env)
+        env = env.push(self.params.bind(args))
+        return eval_all(self.body, env)
 
-    def eval(self, ns):
+    def eval(self, env):
         if self.lexical_env is None:
             # could optimise this, e.g. don't capture if no free vars
-            self.lexical_env = ns
+            self.lexical_env = env
         return self
 
 
@@ -156,8 +156,8 @@ class Macro:
         self.params = params
         self.body = body
 
-    def __call__(self, ns, *args):
-        return eval_all(self.body, ns.push(self.params.bind(args)))
+    def __call__(self, env, *args):
+        return eval_all(self.body, env.push(self.params.bind(args)))
 
 
 class Raise:
@@ -172,10 +172,10 @@ class Raise:
     def __init__(self, exception):
         self.exception = exception
 
-    def eval(self, ns):
+    def eval(self, env):
         if isinstance(self.exception, str):
             raise Exception(self.exception)
-        raise evaluate(self.exception, ns)
+        raise evaluate(self.exception, env)
 
 
 class Quote:
@@ -211,15 +211,15 @@ class Try:
         self.expr = expr
         self.handlers = handlers
 
-    def eval(self, ns):
+    def eval(self, env):
         try:
-            return evaluate(self.expr, ns)
+            return evaluate(self.expr, env)
         except:
             ex = sys.exc_info()[1]
             for ex_type_expr, handler in self.handlers:
-                ex_type = evaluate(ex_type_expr, ns)
+                ex_type = evaluate(ex_type_expr, env)
                 if isinstance(ex, ex_type):
-                    return evaluate(handler, ns)
+                    return evaluate(handler, env)
             raise
 
 

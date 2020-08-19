@@ -1,4 +1,4 @@
-class Namespace:
+class Environment:
     def __init__(self, bindings=None, parent=None):
         self.bindings = bindings or {}
         self.parent = parent
@@ -22,4 +22,4 @@ class Namespace:
         return val
 
     def push(self, bindings=None):
-        return Namespace(bindings=bindings, parent=self)
+        return Environment(bindings=bindings, parent=self)

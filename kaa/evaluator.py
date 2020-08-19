@@ -2,29 +2,29 @@ from kaa.core import List, Symbol
 
 
 # FIXME: figure out where to put this
-def evaluate(expr, ns):
+def evaluate(expr, env):
     # FIXME: this belongs in some compilation phase, not eval
     expr = maybe_eval_special_form(expr)
 
     if isinstance(expr, List) and expr:
-        return invoke(expr, ns)
+        return invoke(expr, env)
     if hasattr(expr, 'eval'):
-        return expr.eval(ns)
+        return expr.eval(env)
     # native Python type
     return expr
 
 
-def invoke(form, ns):
-    first = evaluate(form[0], ns)
+def invoke(form, env):
+    first = evaluate(form[0], env)
     rest = form[1:]
 
     if isinstance(first, Macro):
-        expansion = first(ns, *rest)
-        return evaluate(expansion, ns)
+        expansion = first(env, *rest)
+        return evaluate(expansion, env)
 
-    args = [evaluate(expr, ns) for expr in rest]
+    args = [evaluate(expr, env) for expr in rest]
     if isinstance(first, Lambda):
-        return first(ns, *args)
+        return first(env, *args)
 
     # assume Python callable
     return first(*args)

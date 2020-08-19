@@ -1,20 +1,20 @@
 import os.path
 
 from kaa.core import builtins
+from kaa.env import Environment
 from kaa.evaluator import evaluate
-from kaa.ns import Namespace
 from kaa.reader import Reader
 from kaa.stream import CharStream, FileStream, MultilineStream
 
 
 class Runtime:
     def __init__(self):
-        self.ns = Namespace()
+        self.env = Environment()
         self.bootstrap()
 
     def bootstrap(self):
         for name, value in builtins().items():
-            self.ns.define_global(name, value)
+            self.env.define_global(name, value)
         self.eval_file(os.path.join(os.path.dirname(__file__), 'core.lisp'))
 
     def eval_file(self, path):
@@ -30,5 +30,5 @@ class Runtime:
     def eval_all(self, exprs):
         result = None
         for expr in exprs:
-            result = evaluate(expr, self.ns)
+            result = evaluate(expr, self.env)
         return result

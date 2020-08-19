@@ -439,7 +439,6 @@ good-names=i,
            f,  # file
            fn, # function
            l,  # list
-           ns, # namespace
            s   # string
 
 # Good variable names regexes, separated by a comma. If names match any regex,

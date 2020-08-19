@@ -66,9 +66,9 @@ class Symbol:
     def __repr__(self):
         return self.name
 
-    def eval(self, ns):
+    def eval(self, env):
         try:
-            return ns[self.name]
+            return env[self.name]
         except KeyError:
             raise UnboundSymbol(self)
 

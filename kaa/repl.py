@@ -37,7 +37,7 @@ class Repl:
                 print(serialize(result))
 
     def _store_last_result(self, value):
-        self.runtime.ns.define_global(LAST_RESULT, value)
+        self.runtime.env.define_global(LAST_RESULT, value)
 
 
 # TODO: proper readline support, etc.

@@ -1,7 +1,7 @@
 from pytest import raises
 
 from kaa.core import List, Symbol
-from kaa.ns import Namespace
+from kaa.env import Environment
 from kaa.reader import read
 from kaa.special_forms import ArityException, CompilationException, Def, Lambda, Quote, Raise
 
@@ -20,10 +20,10 @@ def test_parse_invalid_def():
 
 def test_def_sets_value_in_env():
     form = Def(Symbol('x'), 42)
-    ns = Namespace()
-    result = form.eval(ns)
+    env = Environment()
+    result = form.eval(env)
     assert result == 42
-    assert result == ns['x']
+    assert result == env['x']
 
 
 def test_parse_lambda():
@@ -37,16 +37,16 @@ def test_parse_invalid_lambda():
 
 
 def test_call_lambda_produces_expected_result():
-    ns = Namespace({'+': int.__add__})
+    env = Environment({'+': int.__add__})
     fn = Lambda.parse(read('(lambda (x y) (+ x y))'))
     # TODO: could this be callable in Python without needing a namespace passed in?
-    assert fn(ns, 1, 2) == 3
+    assert fn(env, 1, 2) == 3
 
 
 def test_call_lambda_with_invalid_arity():
     fn = Lambda.parse(read('(lambda ())'))
     with raises(ArityException):
-        fn(Namespace(), 'foo')
+        fn(Environment(), 'foo')
 
 
 def test_raises():
@@ -54,13 +54,13 @@ def test_raises():
         pass
     form = Raise(ExampleException('oh no'))
     with raises(ExampleException):
-        form.eval(Namespace())
+        form.eval(Environment())
     form = Raise('oh no')
     with raises(Exception):
-        form.eval(Namespace())
+        form.eval(Environment())
 
 
 def test_quoted_form_evaluates_to_self():
     expr = List([Symbol('foo')])
     quote = Quote(expr)
-    assert quote.eval(Namespace()) == expr
+    assert quote.eval(Environment()) == expr
