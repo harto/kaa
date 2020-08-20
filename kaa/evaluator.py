@@ -1,73 +1,101 @@
-import itertools
+from itertools import chain, dropwhile, islice, repeat, takewhile
 import sys
 
 from kaa.core import is_list, is_symbol, List, Symbol
 
 
-def evaluate(expr, env):
-    # FIXME: this belongs in some compilation phase, not eval
-    expr = maybe_eval_special_form(expr)
-
-    if isinstance(expr, List) and expr:
-        return invoke(expr, env)
-    if hasattr(expr, 'eval'):
-        return expr.eval(env)
-    # native Python type
-    return expr
+def parse_def(form):
+    compiler_assert(len(form) == 3, '`def` requires 2 args', form)
+    name = form[1]
+    compiler_assert(is_symbol(name), '`def` name must be a symbol', form)
+    val = form[2]
+    return Def(name, val)
 
 
-def invoke(form, env):
-    first = evaluate(form[0], env)
-    rest = form[1:]
-
-    if isinstance(first, Macro):
-        expansion = first(env, *rest)
-        return evaluate(expansion, env)
-
-    args = [evaluate(expr, env) for expr in rest]
-    if isinstance(first, Lambda):
-        return first(env, *args)
-
-    # assume Python callable
-    return first(*args)
+def parse_defmacro(form):
+    compiler_assert(len(form) >= 3, '`defmacro` requires 2+ args', form)
+    name = form[1]
+    compiler_assert(is_symbol(name), 'macro name must be a symbol', name)
+    params = parse_params(form[2])
+    body = form[3:]
+    return Def(name, Macro(params, body))
 
 
-def maybe_eval_special_form(expr):
-    if not (isinstance(expr, List) and len(expr) and isinstance(expr[0], Symbol)):
-        return expr
-
-    handlers = {Symbol('def'): Def.parse,
-                Symbol('defmacro'): Macro.define,
-                Symbol('if'): If.parse,
-                Symbol('lambda'): Lambda.parse,
-                Symbol('raise'): Raise.parse,
-                Symbol('quote'): Quote.parse,
-                Symbol('try'): Try.parse}
-    try:
-        handler = handlers[expr[0]]
-    except KeyError:
-        return expr
-    return handler(expr)
+def parse_if(form):
+    compiler_assert(len(form) in (3, 4), '`if` requires 2 or 3 args', form)
+    return If(*form[1:])
 
 
-def eval_all(exprs, env):
-    result = None
-    for expr in exprs:
-        result = evaluate(expr, env)
-    return result
+def parse_lambda(form):
+    compiler_assert(len(form) >= 2, '`lambda` requires 1+ args', form)
+    params = parse_params(form[1])
+    body = form[2:]
+    return Lambda(params, body)
+
+
+def parse_params(form):
+    compiler_assert(is_list(form) and all(is_symbol(p) for p in form),
+                    'params must be a list of symbols', form)
+    required_names = List(sym.name for sym in _parse_required_params(form))
+    optional_names = List(sym.name for sym in _parse_optional_params(form))
+    rest_sym = _parse_rest_param(form)
+    rest_name = rest_sym.name if rest_sym else None
+    return Params(required_names, optional_names, rest_name)
+
+
+def _parse_required_params(form):
+    return takewhile(lambda s: s.name not in ('&optional', '&rest'), form)
+
+
+def _parse_optional_params(form):
+    decl = dropwhile(lambda s: s != Symbol('&optional'), form)
+    return takewhile(lambda s: s.name != '&rest', islice(decl, 1, None))
+
+
+def _parse_rest_param(form):
+    decl = List(dropwhile(lambda s: s != Symbol('&rest'), form))
+    if not decl:
+        return None
+    # TODO: permit &rest without name
+    compiler_assert(len(decl) == 2, '`&rest` must be paired with a symbol', form)
+    return decl[1]
+
+
+def parse_raise(form):
+    compiler_assert(len(form) == 2, '`raise` requires 1 arg', form)
+    return Raise(form[1])
+
+
+def parse_quote(form):
+    compiler_assert(len(form) == 2, '`quote` requires 1 arg', form)
+    return Quote(form[1])
+
+
+def parse_try(form):
+    compiler_assert(len(form) == 3, '`try` requires 2 args', form)
+    expr = form[1]
+    handlers = List(_parse_except_handler(except_) for except_ in form[2:])
+    return Try(expr, handlers)
+
+
+def _parse_except_handler(form):
+    compiler_assert(is_list(form) and len(form) == 3 and form[0] == Symbol('except'),
+                    'invalid except form', form)
+    return form[1:3]
+
+
+SPECIAL_FORMS = {
+    Symbol('def'): parse_def,
+    Symbol('defmacro'): parse_defmacro,
+    Symbol('if'): parse_if,
+    Symbol('lambda'): parse_lambda,
+    Symbol('raise'): parse_raise,
+    Symbol('quote'): parse_quote,
+    Symbol('try'): parse_try,
+}
 
 
 class Def:
-    @classmethod
-    def parse(cls, form):
-        if len(form) != 3:
-            _err('wrong number of args to def', form)
-        sym = form[1]
-        if not is_symbol(sym):
-            _err('first arg to def must be symbol', form)
-        val = form[2]
-        return cls(sym, val)
-
     def __init__(self, symbol, value):
         self.symbol = symbol
         self.value = value
@@ -77,12 +105,6 @@ class Def:
 
 
 class If:
-    @classmethod
-    def parse(cls, form):
-        if len(form) not in (3, 4):
-            _err('wrong number of args to if', form)
-        return cls(*form[1:])
-
     def __init__(self, cond, then, else_=None):
         self.cond = cond
         self.then = then
@@ -97,24 +119,10 @@ class If:
 
 
 class Lambda:
-    @classmethod
-    def parse(cls, form):
-        if len(form) < 2:
-            _err('missing params list', form)
-        params = Params.parse(form[1])
-        body = form[2:]
-        return cls(params, body)
-
     def __init__(self, params, body):
         self.params = params
         self.body = body
         self.lexical_env = None
-
-    def __call__(self, env, *args):
-        if self.lexical_env:
-            env = env.push(self.lexical_env)
-        env = env.push(self.params.bind(args))
-        return eval_all(self.body, env)
 
     def eval(self, env):
         if self.lexical_env is None:
@@ -122,99 +130,44 @@ class Lambda:
             self.lexical_env = env
         return self
 
+    def invoke(self, args, env):
+        if self.lexical_env:
+            env = env.push(self.lexical_env)
+        env = env.push(self.params.bind(args))
+        return evaluate_all(self.body, env)
+
+
+class Macro:
+    def __init__(self, params, body):
+        self.params = params
+        self.body = body
+
+    def expand(self, args, env):
+        # FIXME: is this right? expansion shouldn't evaluate...
+        return evaluate_all(self.body, env.push(self.params.bind(args)))
+
 
 class Params:
-    @classmethod
-    def parse(cls, form):
-        if not (is_list(form) and all(is_symbol(p) for p in form)):
-            _err('params must be list of symbols', form)
-        required_names = [sym.name for sym in cls._parse_required(form)]
-        optional_names = [sym.name for sym in cls._parse_optional(form)]
-        rest = cls._parse_rest(form)
-        rest_name = rest.name if rest else None
-        return cls(required_names, optional_names, rest_name)
-
-    @classmethod
-    def _parse_required(cls, form):
-        return list(itertools.takewhile(lambda s: not s.name.startswith('&'), form))
-
-    @classmethod
-    def _parse_optional(cls, form):
-        decl = list(itertools.dropwhile(lambda s: s != Symbol('&optional'), form))
-        return list(itertools.takewhile(lambda s: not s.name.startswith('&'), decl[1:]))
-
-    @classmethod
-    def _parse_rest(cls, form):
-        decl = list(itertools.dropwhile(lambda s: s != Symbol('&rest'), form))
-        if len(decl) not in (0, 2):
-            _err('invalid rest declaration', form)
-        try:
-            return decl[1]
-        except IndexError:
-            return None
-
-    def __init__(self, required_names=None, optional_names=None, rest_name=None):
-        self.required_names = required_names or []
-        self.optional_names = optional_names or []
+    def __init__(self, required_names=(), optional_names=(), rest_name=None):
+        self.required_names = required_names
+        self.optional_names = optional_names
         self.rest_name = rest_name
-        self.min_arity = len(required_names)
-        self.max_arity = float('inf') if rest_name is not None \
-            else (self.min_arity + len(optional_names))
 
     def bind(self, args):
-        self._check_arity(args)
+        min_arity = len(self.required_names)
+        max_arity = None if self.rest_name is not None else (min_arity + len(self.optional_names))
+        check_arity(len(args), min_arity, max_arity)
+
         bindings = dict(zip(self.required_names, args))
         bindings.update(dict(zip(self.optional_names,
-                                 itertools.chain(args[len(self.required_names):],
-                                                 itertools.repeat(None)))))
+                                 chain(args[len(self.required_names):], repeat(None)))))
         if self.rest_name:
             num_consumed = len(self.required_names) + len(self.optional_names)
             bindings[self.rest_name] = List(args[num_consumed:])
         return bindings
 
-    def _describe_arity(self):
-        if self.max_arity == float('inf'):
-            return '%d or more' % self.min_arity
-        if self.min_arity != self.max_arity:
-            return 'between %d and %d' % (self.min_arity, self.max_arity)
-        return str(self.min_arity)
-
-    def _check_arity(self, args):
-        received = len(args)
-        if received < self.min_arity or self.max_arity < received:
-            raise ArityException('expected %s args, got %d' %
-                                 (self._describe_arity(), received))
-
-
-class Macro:
-    @classmethod
-    def define(cls, form):
-        if len(form) < 3:
-            _err('wrong number of args to defmacro', form)
-        name = form[1]
-        if not is_symbol(name):
-            _err('invalid macro name', name)
-        params = Params.parse(form[2])
-        body = form[3:]
-        return Def(name, cls(params, body))
-
-    def __init__(self, params, body):
-        self.params = params
-        self.body = body
-
-    def __call__(self, env, *args):
-        return eval_all(self.body, env.push(self.params.bind(args)))
-
 
 class Raise:
-    @classmethod
-    def parse(cls, form):
-        try:
-            exception = form[1]
-        except IndexError:
-            _err('raise takes one arg', form)
-        return cls(exception)
-
     def __init__(self, exception):
         self.exception = exception
 
@@ -225,12 +178,6 @@ class Raise:
 
 
 class Quote:
-    @classmethod
-    def parse(cls, form):
-        if len(form) != 2:
-            _err('quote takes one arg', form)
-        return cls(form[1])
-
     def __init__(self, quoted):
         self.quoted = quoted
 
@@ -239,20 +186,6 @@ class Quote:
 
 
 class Try:
-    @classmethod
-    def parse(cls, form):
-        if len(form) != 3:
-            _err('invalid try-except form', form)
-        expr = form[1]
-        handlers = [cls._parse_handler(except_) for except_ in form[2:]]
-        return cls(expr, handlers)
-
-    @classmethod
-    def _parse_handler(cls, form):
-        if not (is_list(form) and len(form) == 3 and form[0] == Symbol('except')):
-            _err('invalid except form', form)
-        return form[1:3]
-
     def __init__(self, expr, handlers):
         self.expr = expr
         self.handlers = handlers
@@ -269,17 +202,73 @@ class Try:
             raise
 
 
-def _err(msg, obj=None):
+def check_arity(num_args, min_arity, max_arity):
+    assert min_arity >= 0
+    assert max_arity is None or min_arity <= max_arity
+
+    if min_arity <= num_args and (max_arity is None or num_args <= max_arity):
+        return
+
+    if max_arity is None:
+        expected = f'at least {min_arity}'
+    elif min_arity == max_arity:
+        expected = min_arity
+    else:
+        expected = f'between {min_arity} and {max_arity}'
+
+    raise WrongArity(f'expected {expected} args, got {num_args}')
+
+
+class WrongArity(Exception):
+    pass
+
+
+def compiler_assert(cond, msg, form):
+    if not cond:
+        compiler_raise(msg, form)
+
+
+def compiler_raise(msg, form):
     try:
-        msg += ' at %s' % obj.meta['source']
+        source = ' at %s' % form.meta['source']
     except KeyError:
-        pass
-    raise CompilationException(msg)
+        source = ''
+    raise CompilationError(msg + source)
 
 
-class ArityException(Exception):
+class CompilationError(Exception):
     pass
 
 
-class CompilationException(Exception):
-    pass
+def evaluate(expr, env):
+    # Parse special forms
+    # FIXME: this belongs in some separate compilation phase
+    if is_list(expr) and expr and is_symbol(expr[0]) and expr[0] in SPECIAL_FORMS:
+        parse_special_form = SPECIAL_FORMS[expr[0]]
+        expr = parse_special_form(expr)
+
+    # Function application
+    if is_list(expr) and expr:
+        f = evaluate(expr[0], env)
+        rest = expr[1:]
+        if isinstance(f, Macro):
+            # FIXME: this perhaps belongs in some separate compilation phase
+            expansion = f.expand(rest, env)
+            return evaluate(expansion, env)
+        args = List(evaluate(x, env) for x in rest)
+        if isinstance(f, Lambda):
+            return f.invoke(args, env)
+        # assume Python callable
+        return f(*args)
+
+    # Values
+    if hasattr(expr, 'eval'):
+        return expr.eval(env)
+    return expr
+
+
+def evaluate_all(exprs, env):
+    result = None
+    for expr in exprs:
+        result = evaluate(expr, env)
+    return result

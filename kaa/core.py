@@ -19,8 +19,10 @@ class List(list):
     def __repr__(self):
         return '(%s)' % ' '.join(map(serialize, self))
 
-    def eval(self, _ns):
-        return self
+    # Permit e.g. List(...)[2:3] -> List
+    def __getitem__(self, k):
+        val = super().__getitem__(k)
+        return List(super().__getitem__(k)) if isinstance(k, slice) else val
 
 
 class Symbol:
@@ -44,6 +46,7 @@ class Symbol:
     def __repr__(self):
         return self.name
 
+    # TODO: doesn't belong here
     def eval(self, env):
         try:
             return env[self.name]

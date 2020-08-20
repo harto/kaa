@@ -2,7 +2,7 @@ import os.path
 
 from kaa.core import builtins
 from kaa.env import Environment
-from kaa.evaluator import evaluate
+from kaa.evaluator import evaluate_all
 from kaa.reader import Reader
 from kaa.stream import CharStream, FileStream, MultilineStream
 
@@ -28,7 +28,4 @@ class Runtime:
         return self.eval_all(Reader().read_all(CharStream(s)))
 
     def eval_all(self, exprs):
-        result = None
-        for expr in exprs:
-            result = evaluate(expr, self.env)
-        return result
+        return evaluate_all(exprs, self.env)
