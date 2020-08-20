@@ -167,8 +167,8 @@ def _process_quasiquote(obj):
 
 
 def _process_quasiquote_list_item(obj):
-    if first(obj) == Symbol('unquote'):
+    if is_list(obj) and first(obj) == Symbol('unquote'):
         return List([Symbol('list'), first(rest(obj))])
-    if first(obj) == Symbol('unquote-splice'):
+    if is_list(obj) and first(obj) == Symbol('unquote-splice'):
         return first(rest(obj))
     return List([Symbol('list'), _process_quasiquote(obj)])

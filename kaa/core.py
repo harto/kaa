@@ -19,7 +19,7 @@ class List(list):
     def __repr__(self):
         return '(%s)' % ' '.join(map(serialize, self))
 
-    # Permit e.g. List(...)[2:3] -> List
+    # Permit e.g. x = List(...); x[2:3] # -> List
     def __getitem__(self, k):
         val = super().__getitem__(k)
         return List(super().__getitem__(k)) if isinstance(k, slice) else val
@@ -46,26 +46,9 @@ class Symbol:
     def __repr__(self):
         return self.name
 
-    # TODO: doesn't belong here
-    def eval(self, env):
-        try:
-            return env[self.name]
-        except KeyError:
-            raise UnboundSymbol(self)
-
-
-class UnboundSymbol(Exception):
-    def __init__(self, sym):
-        try:
-            msg = '%s at %s' % (sym.name, sym.meta['source'])
-        except KeyError:
-            msg = sym.name
-        Exception.__init__(self, msg)
-
 
 def concat(*lists):
     return reduce(lambda x, y: List((x or []) + (y or [])), lists)
-
 
 
 def empty(val):
@@ -91,9 +74,11 @@ def list_(*items):
 
 
 def first(val):
+    if val is None:
+        return None
     try:
         return next(iter(val))
-    except (StopIteration, TypeError):
+    except StopIteration:
         return None
 
 
@@ -110,8 +95,10 @@ def println(*vals):
 
 
 def rest(val):
-    if isinstance(val, List):
-        return List(val[1:])
+    if val is None:
+        return None
+    if is_list(val):
+        return val[1:]
     raise ValueError(f"can't get rest of {type(val)}")
 
 
@@ -135,6 +122,10 @@ def mul(*xs):
     return reduce(lambda acc, x: acc * x, xs, 1)
 
 
+def div(*xs):
+    return reduce(lambda acc, x: acc / x, xs, 1)
+
+
 def builtins():
     return {'True': True,
             'False': False,
@@ -142,9 +133,10 @@ def builtins():
             '+': add,
             '=': eql,
             '*': mul,
+            '/': div,
             'concat': concat,
             'count': len,
-            'empty': empty,
+            'empty?': empty,
             'first': first,
             'list': list_,
             'list?': is_list,

@@ -17,9 +17,9 @@ class Environment:
 
     def define_global(self, name, val):
         if self.parent:
-            return self.parent.define_global(name, val)
-        self.bindings[name] = val
-        return val
+            self.parent.define_global(name, val)
+        else:
+            self.bindings[name] = val
 
     def push(self, bindings=None):
         return Environment(bindings=bindings, parent=self)

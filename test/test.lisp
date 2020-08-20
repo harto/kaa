@@ -26,9 +26,18 @@
 (def bar (* 3 foo))
 (test (= 126 bar))
 
+;; quoting
+(test (symbol? 'some-symbol))
+(test (= (list 'a 'b 'c) '(a b c)))
+(test (list? ()))
+(test (empty? ()))
+
 ;; lambdas
 (test (= None ((lambda ()))))
+(test (= 3 ((lambda () 3))))
+(test (= 4 ((lambda (x) x) 4)))
 (def x 5)
+(test (= 5 ((lambda () x))))
 (def add (lambda (x y)
            (+ x y)))
 (test (= 3 (add 1 2)))
@@ -67,9 +76,14 @@
            `(a ~@x e))))
 
 ;; try/raise/except
-(try (do (test (= 1 2))
-         (raise "fail"))
-     (except py/AssertionError None))
+(test (= 'ok (try (do (assert (= 1 2))
+                      (raise "fail"))
+                  (except py/AssertionError 'ok))))
+
+(test (= 'ok (try (raise (/ 1 0))
+                  (except py/ValueError (raise "unreachable"))
+                  (except py/ZeroDivisionError 'ok)
+                  (except py/Exception (raise "unreachable")))))
 
 ;; conditionals
 (test (= 'ok (if True 'ok 'fail)))

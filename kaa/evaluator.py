@@ -1,3 +1,4 @@
+from collections import namedtuple
 from itertools import chain, dropwhile, islice, repeat, takewhile
 import sys
 
@@ -6,38 +7,34 @@ from kaa.core import is_list, is_symbol, List, Symbol
 
 def parse_def(form):
     compiler_assert(len(form) == 3, '`def` requires 2 args', form)
-    name = form[1]
+    name, val = form[1:]
     compiler_assert(is_symbol(name), '`def` name must be a symbol', form)
-    val = form[2]
     return Def(name, val)
 
 
 def parse_defmacro(form):
     compiler_assert(len(form) >= 3, '`defmacro` requires 2+ args', form)
-    name = form[1]
+    name, params, *body = form[1:]
     compiler_assert(is_symbol(name), 'macro name must be a symbol', name)
-    params = parse_params(form[2])
-    body = form[3:]
-    return Def(name, Macro(params, body))
+    return Def(name, Macro(parse_params(params), body))
 
 
 def parse_if(form):
     compiler_assert(len(form) in (3, 4), '`if` requires 2 or 3 args', form)
-    return If(*form[1:])
+    return If(form[1], form[2], form[3] if len(form) == 4 else None)
 
 
 def parse_lambda(form):
     compiler_assert(len(form) >= 2, '`lambda` requires 1+ args', form)
-    params = parse_params(form[1])
-    body = form[2:]
-    return Lambda(params, body)
+    params, *body = form[1:]
+    return Lambda(parse_params(params), body, None)
 
 
 def parse_params(form):
     compiler_assert(is_list(form) and all(is_symbol(p) for p in form),
                     'params must be a list of symbols', form)
-    required_names = List(sym.name for sym in _parse_required_params(form))
-    optional_names = List(sym.name for sym in _parse_optional_params(form))
+    required_names = tuple(sym.name for sym in _parse_required_params(form))
+    optional_names = tuple(sym.name for sym in _parse_optional_params(form))
     rest_sym = _parse_rest_param(form)
     rest_name = rest_sym.name if rest_sym else None
     return Params(required_names, optional_names, rest_name)
@@ -53,7 +50,7 @@ def _parse_optional_params(form):
 
 
 def _parse_rest_param(form):
-    decl = List(dropwhile(lambda s: s != Symbol('&rest'), form))
+    decl = tuple(dropwhile(lambda s: s != Symbol('&rest'), form))
     if not decl:
         return None
     # TODO: permit &rest without name
@@ -72,13 +69,12 @@ def parse_quote(form):
 
 
 def parse_try(form):
-    compiler_assert(len(form) == 3, '`try` requires 2 args', form)
-    expr = form[1]
-    handlers = List(_parse_except_handler(except_) for except_ in form[2:])
-    return Try(expr, handlers)
+    compiler_assert(len(form) >= 3, '`try` requires 2+ args', form)
+    expr, *excepts = form[1:]
+    return Try(expr, (_parse_except(except_) for except_ in excepts))
 
 
-def _parse_except_handler(form):
+def _parse_except(form):
     compiler_assert(is_list(form) and len(form) == 3 and form[0] == Symbol('except'),
                     'invalid except form', form)
     return form[1:3]
@@ -95,128 +91,51 @@ SPECIAL_FORMS = {
 }
 
 
-class Def:
-    def __init__(self, symbol, value):
-        self.symbol = symbol
-        self.value = value
-
-    def eval(self, env):
-        return env.define_global(self.symbol.name, evaluate(self.value, env))
-
-
-class If:
-    def __init__(self, cond, then, else_=None):
-        self.cond = cond
-        self.then = then
-        self.else_ = else_
-
-    def eval(self, env):
-        if evaluate(self.cond, env):
-            return evaluate(self.then, env)
-        if self.else_:
-            return evaluate(self.else_, env)
-        return None
-
-
-class Lambda:
-    def __init__(self, params, body):
-        self.params = params
-        self.body = body
-        self.lexical_env = None
-
-    def eval(self, env):
-        if self.lexical_env is None:
-            # could optimise this, e.g. don't capture if no free vars
-            self.lexical_env = env
-        return self
-
-    def invoke(self, args, env):
-        if self.lexical_env:
-            env = env.push(self.lexical_env)
-        env = env.push(self.params.bind(args))
-        return evaluate_all(self.body, env)
-
-
-class Macro:
-    def __init__(self, params, body):
-        self.params = params
-        self.body = body
-
-    def expand(self, args, env):
-        # FIXME: is this right? expansion shouldn't evaluate...
-        return evaluate_all(self.body, env.push(self.params.bind(args)))
+Def = namedtuple('Def', 'symbol value')
+If = namedtuple('If', 'cond then else_')
+Lambda = namedtuple('Lambda', 'params body lexical_env')
+Macro = namedtuple('Macro', 'params body')
+Quote = namedtuple('Quote', 'value')
+Raise = namedtuple('Raise', 'ex')
+Try = namedtuple('Try', 'expr handlers')
 
 
 class Params:
-    def __init__(self, required_names=(), optional_names=(), rest_name=None):
+    def __init__(self, required_names, optional_names, rest_name):
         self.required_names = required_names
         self.optional_names = optional_names
         self.rest_name = rest_name
 
-    def bind(self, args):
+    def check_arity(self, args):
         min_arity = len(self.required_names)
         max_arity = None if self.rest_name is not None else (min_arity + len(self.optional_names))
-        check_arity(len(args), min_arity, max_arity)
+        num_args = len(args)
+
+        if min_arity <= num_args and (max_arity is None or num_args <= max_arity):
+            return
+
+        if max_arity is None:
+            expected = f'at least {min_arity}'
+        elif min_arity == max_arity:
+            expected = min_arity
+        else:
+            expected = f'between {min_arity} and {max_arity}'
+
+        raise WrongArity(f'expected {expected} args, got {num_args}')
+
+    def bind(self, args):
+        self.check_arity(args)
 
         bindings = dict(zip(self.required_names, args))
+
         bindings.update(dict(zip(self.optional_names,
                                  chain(args[len(self.required_names):], repeat(None)))))
+
         if self.rest_name:
             num_consumed = len(self.required_names) + len(self.optional_names)
             bindings[self.rest_name] = List(args[num_consumed:])
+
         return bindings
-
-
-class Raise:
-    def __init__(self, exception):
-        self.exception = exception
-
-    def eval(self, env):
-        if isinstance(self.exception, str):
-            raise Exception(self.exception)
-        raise evaluate(self.exception, env)
-
-
-class Quote:
-    def __init__(self, quoted):
-        self.quoted = quoted
-
-    def eval(self, _):
-        return self.quoted
-
-
-class Try:
-    def __init__(self, expr, handlers):
-        self.expr = expr
-        self.handlers = handlers
-
-    def eval(self, env):
-        try:
-            return evaluate(self.expr, env)
-        except:
-            ex = sys.exc_info()[1]
-            for ex_type_expr, handler in self.handlers:
-                ex_type = evaluate(ex_type_expr, env)
-                if isinstance(ex, ex_type):
-                    return evaluate(handler, env)
-            raise
-
-
-def check_arity(num_args, min_arity, max_arity):
-    assert min_arity >= 0
-    assert max_arity is None or min_arity <= max_arity
-
-    if min_arity <= num_args and (max_arity is None or num_args <= max_arity):
-        return
-
-    if max_arity is None:
-        expected = f'at least {min_arity}'
-    elif min_arity == max_arity:
-        expected = min_arity
-    else:
-        expected = f'between {min_arity} and {max_arity}'
-
-    raise WrongArity(f'expected {expected} args, got {num_args}')
 
 
 class WrongArity(Exception):
@@ -224,11 +143,8 @@ class WrongArity(Exception):
 
 
 def compiler_assert(cond, msg, form):
-    if not cond:
-        compiler_raise(msg, form)
-
-
-def compiler_raise(msg, form):
+    if cond:
+        return
     try:
         source = ' at %s' % form.meta['source']
     except KeyError:
@@ -240,35 +156,122 @@ class CompilationError(Exception):
     pass
 
 
-def evaluate(expr, env):
-    # Parse special forms
-    # FIXME: this belongs in some separate compilation phase
-    if is_list(expr) and expr and is_symbol(expr[0]) and expr[0] in SPECIAL_FORMS:
-        parse_special_form = SPECIAL_FORMS[expr[0]]
-        expr = parse_special_form(expr)
+def is_special_form(expr):
+    return is_list(expr) and expr and is_symbol(expr[0]) and expr[0] in SPECIAL_FORMS
 
-    # Function application
-    if is_list(expr) and expr:
-        f = evaluate(expr[0], env)
-        rest = expr[1:]
+
+def parse_special_form(expr):
+    sym = expr[0]
+    parse = SPECIAL_FORMS[sym]
+    return parse(expr)
+
+
+class Evaluator:
+    def __init__(self, env):
+        self.env = env
+
+    def evaluate(self, expr):
+        "Recursively parse and evaluate some s-expression."
+        # TODO: does this perhaps belong in some separate compilation phase?
+        if is_special_form(expr):
+            expr = parse_special_form(expr)
+
+        # Function invocation
+        if is_list(expr) and expr:
+            return self.invoke(expr)
+
+        evaluator = getattr(self, f'eval__{type(expr).__name__}', None)
+        if evaluator:
+            return evaluator(expr)
+
+        return expr
+
+    def evaluate_all(self, exprs):
+        "Evaluate a sequence of expressions, returning the result of the last one."
+        result = None
+        for expr in exprs:
+            result = self.evaluate(expr)
+        return result
+
+    def invoke(self, expr):
+        f = self.evaluate(expr[0])
+        unevaled_args = expr[1:]
+
         if isinstance(f, Macro):
-            # FIXME: this perhaps belongs in some separate compilation phase
-            expansion = f.expand(rest, env)
-            return evaluate(expansion, env)
-        args = List(evaluate(x, env) for x in rest)
+            # TODO: this perhaps belongs in some separate compilation phase
+            expansion = self.macroexpand(f, unevaled_args)
+            return self.evaluate(expansion)
+
+        evaled_args = tuple(self.evaluate(x) for x in unevaled_args)
+
         if isinstance(f, Lambda):
-            return f.invoke(args, env)
+            return self.apply(f, evaled_args)
+
         # assume Python callable
-        return f(*args)
+        return f(*evaled_args)
 
-    # Values
-    if hasattr(expr, 'eval'):
-        return expr.eval(env)
-    return expr
+    def macroexpand(self, macro, args):
+        bindings = macro.params.bind(args)
+        return self.with_bindings(bindings).evaluate_all(macro.body)
+
+    def apply(self, fn, args):
+        lexical_bindings = fn.lexical_env.bindings if fn.lexical_env else {}
+        local_bindings = fn.params.bind(args)
+        bindings = dict(**lexical_bindings)
+        bindings.update(local_bindings)
+        return self.with_bindings(bindings).evaluate_all(fn.body)
+
+    def with_bindings(self, bindings):
+        return Evaluator(self.env.push(bindings))
+
+    def eval__Def(self, node):  # pylint: disable=invalid-name
+        val = self.evaluate(node.value)
+        self.env.define_global(node.symbol.name, val)
+        return val
+
+    def eval__If(self, node):  # pylint: disable=invalid-name
+        if self.evaluate(node.cond):
+            return self.evaluate(node.then)
+        return self.evaluate(node.else_)
+
+    def eval__Lambda(self, node):  # pylint: disable=invalid-name
+        # TODO: this seems a bit hacky. Should we be capturing the lexical env elsewhere?
+        if node.lexical_env is None:
+            # could optimise this, e.g. don't capture if no free vars
+            return Lambda(node.params, node.body, self.env)
+        return node
+
+    def eval__Quote(self, node):  # pylint: disable=invalid-name, no-self-use
+        return node.value
+
+    def eval__Raise(self, node):  # pylint: disable=invalid-name
+        ex = self.evaluate(node.ex)
+        if isinstance(ex, str):
+            raise RuntimeError(ex)
+        raise ex
+
+    def eval__Symbol(self, sym):  # pylint: disable=invalid-name
+        try:
+            return self.env[sym.name]
+        except KeyError:
+            raise UnboundSymbol(sym)
+
+    def eval__Try(self, node):  # pylint: disable=invalid-name
+        try:
+            return self.evaluate(node.expr)
+        except:
+            ex = sys.exc_info()[1]
+            for ex_type_expr, handler in node.handlers:
+                ex_type = self.evaluate(ex_type_expr)
+                if isinstance(ex, ex_type):
+                    return self.evaluate(handler)
+            raise
 
 
-def evaluate_all(exprs, env):
-    result = None
-    for expr in exprs:
-        result = evaluate(expr, env)
-    return result
+class UnboundSymbol(Exception):
+    def __init__(self, sym):
+        try:
+            msg = '%s at %s' % (sym.name, sym.meta['source'])
+        except KeyError:
+            msg = sym.name
+        super().__init__(msg)
