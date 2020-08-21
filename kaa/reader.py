@@ -1,6 +1,6 @@
 import re
 
-from kaa.core import empty, first, is_list, rest, List, Symbol
+from kaa.core import first, is_list, rest, List, Symbol
 from kaa.stream import CharStream, StreamEmpty
 
 
@@ -156,7 +156,7 @@ class EOF(Exception):
 
 def _process_quasiquote(obj):
     # `a -> 'a
-    if not is_list(obj) or empty(obj):
+    if not is_list(obj) or not obj:
         return List([Symbol('quote'), obj])
     # `~a -> a
     if first(obj) == Symbol('unquote'):
