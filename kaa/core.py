@@ -19,7 +19,7 @@ class List(list):
     def __repr__(self):
         return '(%s)' % ' '.join(map(serialize, self))
 
-    # Permit e.g. x = List(...); x[2:3] # -> List
+    # Ensure slicing returns new List instance
     def __getitem__(self, k):
         val = super().__getitem__(k)
         return List(super().__getitem__(k)) if isinstance(k, slice) else val
