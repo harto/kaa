@@ -5,31 +5,36 @@ import sys
 from kaa.core import is_list, is_symbol, List, Symbol
 
 
+# (def NAME EXPR)
 def parse_def(form):
     compiler_assert(len(form) == 3, '`def` requires 2 args', form)
-    name, val = form[1:]
+    _, name, val = form
     compiler_assert(is_symbol(name), '`def` name must be a symbol', form)
     return Def(name, val)
 
 
+# (defmacro NAME PARAMS [EXPR …])
 def parse_defmacro(form):
     compiler_assert(len(form) >= 3, '`defmacro` requires 2+ args', form)
-    name, params, *body = form[1:]
+    _, name, params, *body = form
     compiler_assert(is_symbol(name), 'macro name must be a symbol', name)
     return Def(name, Macro(parse_params(params), body))
 
 
+# (if COND THEN [ELSE])
 def parse_if(form):
     compiler_assert(len(form) in (3, 4), '`if` requires 2 or 3 args', form)
     return If(form[1], form[2], form[3] if len(form) == 4 else None)
 
 
+# (lambda PARAMS [EXPR …])
 def parse_lambda(form):
     compiler_assert(len(form) >= 2, '`lambda` requires 1+ args', form)
-    params, *body = form[1:]
+    _, params, *body = form
     return Lambda(parse_params(params), body, None)
 
 
+# ([SYM …] [&optional SYM …] [&rest SYM])
 def parse_params(form):
     compiler_assert(is_list(form) and all(is_symbol(p) for p in form),
                     'params must be a list of symbols', form)
@@ -58,19 +63,22 @@ def _parse_rest_param(form):
     return decl[1]
 
 
+# (raise EXPR)
 def parse_raise(form):
     compiler_assert(len(form) == 2, '`raise` requires 1 arg', form)
     return Raise(form[1])
 
 
+# (quote EXPR)
 def parse_quote(form):
     compiler_assert(len(form) == 2, '`quote` requires 1 arg', form)
     return Quote(form[1])
 
 
+# (try EXPR (catch EX EXPR) …)
 def parse_try(form):
     compiler_assert(len(form) >= 3, '`try` requires 2+ args', form)
-    expr, *excepts = form[1:]
+    _, expr, *excepts = form
     return Try(expr, (_parse_except(except_) for except_ in excepts))
 
 
