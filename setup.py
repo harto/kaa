@@ -1,5 +1,7 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(name='kaa',
       version='0.0.0',
-      entry_points={'console_scripts': ['kaa=kaa.main:boot']})
+      packages=find_packages('src'),
+      package_dir={'': 'src'},
+      entry_points={'console_scripts': ['kaa=kaa.main:main']})

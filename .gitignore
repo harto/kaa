@@ -1,3 +1,4 @@
-*.pyc
-/kaa.egg-info
+.pytest_cache
 /venv
+__pycache__
+kaa.egg-info

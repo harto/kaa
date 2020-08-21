@@ -5,7 +5,7 @@ from kaa.repl import Repl
 from kaa.runtime import Runtime
 
 
-def boot():
+def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('paths',
@@ -35,4 +35,4 @@ def boot():
 
 
 if __name__ == '__main__':
-    boot()
+    main()
