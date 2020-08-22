@@ -14,7 +14,7 @@ from kaa.evaluator import (
     UnboundSymbol,
     WrongArity,
 )
-from kaa.reader import read
+from testing_utils import read
 
 
 def test_parse_def():

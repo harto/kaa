@@ -1,8 +1,9 @@
 from pytest import raises
 
 from kaa.core import List, Symbol
-from kaa.reader import EOF, InvalidEscapeSequence, read, Reader, UnbalancedDelimiter
+from kaa.reader import EOF, InvalidEscapeSequence, Reader, UnbalancedDelimiter
 from kaa.stream import IterStream
+from testing_utils import read
 
 
 def test_read_int():

@@ -7,11 +7,6 @@ from kaa.stream import CharStream, IterStream, StreamEmpty
 EOLIST = object()
 
 
-def read(s):
-    "Convenience method for reading a single object from a string."
-    return Reader().read_next(CharStream(s))
-
-
 class Reader:
     @classmethod
     def read_file(cls, f):

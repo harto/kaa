@@ -3,7 +3,7 @@ set -e
 cd "$(dirname "$0")"/..
 
 echo 'Running unit tests'
-PYTHONPATH=src pytest test
+PYTHONPATH=src:test pytest test
 
 echo 'Running system tests'
 kaa test/test.lisp
