@@ -25,13 +25,13 @@ def main():
 
     elif args.paths:
         for path in args.paths:
-            runtime.eval_file(path)
-
+            with open(path) as f:
+                runtime.eval_file(f)
     elif sys.stdin.isatty():
         Repl(runtime).loop()
 
     else:
-        runtime.eval_lines(sys.stdin)
+        runtime.eval_file(sys.stdin)
 
 
 if __name__ == '__main__':

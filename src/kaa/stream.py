@@ -1,6 +1,3 @@
-# todo: fix source meta in repl
-# todo: consolidate different buffer types, including repl
-
 class CharStream:
     def __init__(self, source):
         self.source = source
@@ -23,9 +20,10 @@ class CharStream:
         return SourceMeta(self.col - 1)
 
 
-class MultilineStream:
-    def __init__(self, lines):
+class IterStream:
+    def __init__(self, lines, filename=None):
         self.lines = (CharStream(line) for line in lines)
+        self.filename = filename
         self.line_num = 0
         self.peeked_line = None
         self.line = self.pop_line()
@@ -63,18 +61,7 @@ class MultilineStream:
 
     def source_meta(self):
         line_meta = self.line.source_meta()
-        return SourceMeta(line_meta.col, self.line_num)
-
-
-class FileStream(MultilineStream):
-    def __init__(self, f):
-        super().__init__(f)
-        self.path = f.name
-
-    def source_meta(self):
-        meta = super().source_meta()
-        meta.filename = self.path
-        return meta
+        return SourceMeta(line_meta.col, self.line_num, self.filename)
 
 
 class StreamEmpty(Exception):

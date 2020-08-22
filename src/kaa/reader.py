@@ -1,7 +1,7 @@
 import re
 
 from kaa.core import first, is_list, rest, List, Symbol
-from kaa.stream import CharStream, StreamEmpty
+from kaa.stream import CharStream, IterStream, StreamEmpty
 
 
 EOLIST = object()
@@ -13,6 +13,14 @@ def read(s):
 
 
 class Reader:
+    @classmethod
+    def read_file(cls, f):
+        return cls().read_all(IterStream(f, f.name))
+
+    @classmethod
+    def read_string(cls, s):
+        return cls().read_all(CharStream(s))
+
     def __init__(self):
         self.list_depth = 0
 

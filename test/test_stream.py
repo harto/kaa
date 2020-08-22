@@ -1,6 +1,6 @@
 import pytest
 
-from kaa.stream import CharStream, MultilineStream, StreamEmpty
+from kaa.stream import CharStream, IterStream, StreamEmpty
 
 
 def test_char_stream_peek_empty():
@@ -21,16 +21,16 @@ def test_char_stream_pop():
         stream.pop_char()
 
 
-def test_multiline_stream_peek_empty():
-    assert MultilineStream(['']).peek_char() is None
+def test_iter_stream_peek_empty():
+    assert IterStream(['']).peek_char() is None
 
 
-def test_multiline_stream_peek():
-    assert MultilineStream(['a']).peek_char() == 'a'
+def test_iter_stream_peek():
+    assert IterStream(['a']).peek_char() == 'a'
 
 
-def test_multiline_stream_pop():
-    stream = MultilineStream(['ab', 'c'])
+def test_iter_stream_pop():
+    stream = IterStream(['ab', 'c'])
     assert stream.pop_char() == 'a'
     assert stream.pop_char() == 'b'
     assert stream.pop_char() == 'c'

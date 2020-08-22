@@ -2,7 +2,7 @@ from pytest import raises
 
 from kaa.core import List, Symbol
 from kaa.reader import EOF, InvalidEscapeSequence, read, Reader, UnbalancedDelimiter
-from kaa.stream import MultilineStream
+from kaa.stream import IterStream
 
 
 def test_read_int():
@@ -60,10 +60,12 @@ def test_read_python_builtin():
 
 
 def test_source_meta():
-    lines = MultilineStream(('(foo', '  (bar))'))
+    lines = IterStream(('(foo', '  (bar))'), filename='yadda')
     obj = Reader().read_next(lines)
+    assert obj.meta['source'].filename == 'yadda'
     assert obj.meta['source'].line == 1
     assert obj.meta['source'].col == 0
     obj = obj[1]
+    assert obj.meta['source'].filename == 'yadda'
     assert obj.meta['source'].line == 2
     assert obj.meta['source'].col == 2
