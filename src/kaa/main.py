@@ -13,7 +13,7 @@ def main():
                         nargs='*',
                         help='lisp file(s) to evaluate')
 
-    parser.add_argument('--expression',
+    parser.add_argument('-e', '--expression',
                         help='lisp expression to evaluate')
 
     args = parser.parse_args()
