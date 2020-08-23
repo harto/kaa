@@ -6,4 +6,4 @@ echo 'Running unit tests'
 PYTHONPATH=src:test pytest test
 
 echo 'Running system tests'
-kaa test/test.lisp
+kaa test/tests.lisp

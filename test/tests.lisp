@@ -1,10 +1,10 @@
-(print "running test.lisp ")
+(print "tests.lisp ")
 
 ;; (assert (= 5 (+ 2 2)))
 (defmacro test (expr)
   `(do
-      (assert ~expr)
-      (print ".")))
+    (assert ~expr)
+    (print ".")))
 
 ;; multi-line expressions
 (test (= 21
