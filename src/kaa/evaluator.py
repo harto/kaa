@@ -1,177 +1,7 @@
-from collections import namedtuple
-from itertools import chain, dropwhile, islice, repeat, takewhile
 import sys
 
-from kaa.core import is_list, is_symbol, List, Symbol
-
-
-# (def NAME EXPR)
-def parse_def(form):
-    compiler_assert(len(form) == 3, '`def` requires 2 args', form)
-    _, name, val = form
-    compiler_assert(is_symbol(name), '`def` name must be a symbol', form)
-    return Def(name, val)
-
-
-# (defmacro NAME PARAMS [EXPR …])
-def parse_defmacro(form):
-    compiler_assert(len(form) >= 3, '`defmacro` requires 2+ args', form)
-    _, name, params, *body = form
-    compiler_assert(is_symbol(name), 'macro name must be a symbol', name)
-    return Def(name, Macro(parse_params(params), body))
-
-
-# (if COND THEN [ELSE])
-def parse_if(form):
-    compiler_assert(len(form) in (3, 4), '`if` requires 2 or 3 args', form)
-    return If(form[1], form[2], form[3] if len(form) == 4 else None)
-
-
-# (lambda PARAMS [EXPR …])
-def parse_lambda(form):
-    compiler_assert(len(form) >= 2, '`lambda` requires 1+ args', form)
-    _, params, *body = form
-    return Lambda(parse_params(params), body, None)
-
-
-# ([SYM …] [&optional SYM …] [&rest SYM])
-def parse_params(form):
-    compiler_assert(is_list(form) and all(is_symbol(p) for p in form),
-                    'params must be a list of symbols', form)
-    required_names = tuple(sym.name for sym in _parse_required_params(form))
-    optional_names = tuple(sym.name for sym in _parse_optional_params(form))
-    rest_sym = _parse_rest_param(form)
-    rest_name = rest_sym.name if rest_sym else None
-    return Params(required_names, optional_names, rest_name)
-
-
-def _parse_required_params(form):
-    return takewhile(lambda s: s.name not in ('&optional', '&rest'), form)
-
-
-def _parse_optional_params(form):
-    decl = dropwhile(lambda s: s != Symbol('&optional'), form)
-    return takewhile(lambda s: s.name != '&rest', islice(decl, 1, None))
-
-
-def _parse_rest_param(form):
-    decl = tuple(dropwhile(lambda s: s != Symbol('&rest'), form))
-    if not decl:
-        return None
-    # TODO: permit &rest without name
-    compiler_assert(len(decl) == 2, '`&rest` must be paired with a symbol', form)
-    return decl[1]
-
-
-# (raise EXPR)
-def parse_raise(form):
-    compiler_assert(len(form) == 2, '`raise` requires 1 arg', form)
-    return Raise(form[1])
-
-
-# (quote EXPR)
-def parse_quote(form):
-    compiler_assert(len(form) == 2, '`quote` requires 1 arg', form)
-    return Quote(form[1])
-
-
-# (try EXPR (catch EX EXPR) …)
-def parse_try(form):
-    compiler_assert(len(form) >= 3, '`try` requires 2+ args', form)
-    _, expr, *excepts = form
-    return Try(expr, (_parse_except(except_) for except_ in excepts))
-
-
-def _parse_except(form):
-    compiler_assert(is_list(form) and len(form) == 3 and form[0] == Symbol('except'),
-                    'invalid except form', form)
-    return form[1:3]
-
-
-SPECIAL_FORMS = {
-    Symbol('def'): parse_def,
-    Symbol('defmacro'): parse_defmacro,
-    Symbol('if'): parse_if,
-    Symbol('lambda'): parse_lambda,
-    Symbol('raise'): parse_raise,
-    Symbol('quote'): parse_quote,
-    Symbol('try'): parse_try,
-}
-
-
-Def = namedtuple('Def', 'symbol value')
-If = namedtuple('If', 'cond then else_')
-Lambda = namedtuple('Lambda', 'params body lexical_env')
-Macro = namedtuple('Macro', 'params body')
-Quote = namedtuple('Quote', 'value')
-Raise = namedtuple('Raise', 'ex')
-Try = namedtuple('Try', 'expr handlers')
-
-
-class Params:
-    def __init__(self, required_names, optional_names, rest_name):
-        self.required_names = required_names
-        self.optional_names = optional_names
-        self.rest_name = rest_name
-
-    def check_arity(self, args):
-        min_arity = len(self.required_names)
-        max_arity = None if self.rest_name is not None else (min_arity + len(self.optional_names))
-        num_args = len(args)
-
-        if min_arity <= num_args and (max_arity is None or num_args <= max_arity):
-            return
-
-        if max_arity is None:
-            expected = f'at least {min_arity}'
-        elif min_arity == max_arity:
-            expected = min_arity
-        else:
-            expected = f'between {min_arity} and {max_arity}'
-
-        raise WrongArity(f'expected {expected} args, got {num_args}')
-
-    def bind(self, args):
-        self.check_arity(args)
-
-        bindings = dict(zip(self.required_names, args))
-
-        bindings.update(dict(zip(self.optional_names,
-                                 chain(args[len(self.required_names):], repeat(None)))))
-
-        if self.rest_name:
-            num_consumed = len(self.required_names) + len(self.optional_names)
-            bindings[self.rest_name] = List(args[num_consumed:])
-
-        return bindings
-
-
-class WrongArity(Exception):
-    pass
-
-
-def compiler_assert(cond, msg, form):
-    if cond:
-        return
-    try:
-        source = ' at %s' % form.meta['source']
-    except KeyError:
-        source = ''
-    raise CompilationError(msg + source)
-
-
-class CompilationError(Exception):
-    pass
-
-
-def is_special_form(expr):
-    return is_list(expr) and expr and is_symbol(expr[0]) and expr[0] in SPECIAL_FORMS
-
-
-def parse_special_form(expr):
-    sym = expr[0]
-    parse = SPECIAL_FORMS[sym]
-    return parse(expr)
+from kaa.core import is_list, is_symbol
+from kaa.parser import Lambda, Macro, parse
 
 
 class Evaluator:
@@ -180,9 +10,7 @@ class Evaluator:
 
     def evaluate(self, expr):
         "Recursively parse and evaluate some s-expression."
-        # TODO: does this perhaps belong in some separate compilation phase?
-        if is_special_form(expr):
-            expr = parse_special_form(expr)
+        expr = parse(expr)
 
         # Function invocation
         if is_list(expr) and expr:
@@ -206,7 +34,7 @@ class Evaluator:
         unevaled_args = expr[1:]
 
         if isinstance(f, Macro):
-            # TODO: this perhaps belongs in some separate compilation phase
+            # TODO: this perhaps belongs in some separate compilation phase?
             expansion = self.macroexpand(f, unevaled_args)
             return self.evaluate(expansion)
 
@@ -219,12 +47,12 @@ class Evaluator:
         return f(*evaled_args)
 
     def macroexpand(self, macro, args):
-        bindings = macro.params.bind(args)
+        bindings = bind_params(macro.params, args)
         return self.with_bindings(bindings).evaluate_all(macro.body)
 
     def apply(self, fn, args):
         lexical_bindings = fn.lexical_env.bindings if fn.lexical_env else {}
-        local_bindings = fn.params.bind(args)
+        local_bindings = bind_params(fn.params, args)
         bindings = dict(**lexical_bindings)
         bindings.update(local_bindings)
         return self.with_bindings(bindings).evaluate_all(fn.body)
@@ -243,7 +71,6 @@ class Evaluator:
         return self.evaluate(node.else_)
 
     def eval__Lambda(self, node):  # pylint: disable=invalid-name
-        # TODO: this seems a bit hacky. Should we be capturing the lexical env elsewhere?
         if node.lexical_env is None:
             # could optimise this, e.g. don't capture if no free vars
             return Lambda(node.params, node.body, self.env)
@@ -274,6 +101,44 @@ class Evaluator:
                 if isinstance(ex, ex_type):
                     return self.evaluate(handler)
             raise
+
+
+
+def bind_params(params, args):
+    check_arity(params, args)
+
+    bindings = dict(zip(params.required, args))
+
+    bindings.update(zip(params.optional, chain(args[len(params.required):], repeat(None))))
+
+    if params.rest:
+        num_consumed = len(params.required) + len(params.optional)
+        bindings[params.rest] = List(args[num_consumed:])
+
+    return bindings
+
+
+def check_arity(params, args):
+    min_arity = len(params.required)
+    max_arity = None if params.rest is not None else (min_arity + len(params.optional))
+    num_args = len(args)
+
+    if min_arity <= num_args and (max_arity is None or num_args <= max_arity):
+        return
+
+    if max_arity is None:
+        expected = f'at least {min_arity}'
+    elif min_arity == max_arity:
+        expected = min_arity
+    else:
+        expected = f'between {min_arity} and {max_arity}'
+
+    # TODO: raise TypeError, like Python?
+    raise WrongArity(f'expected {expected} args, got {num_args}')
+
+
+class WrongArity(Exception):
+    pass
 
 
 class UnboundSymbol(Exception):
