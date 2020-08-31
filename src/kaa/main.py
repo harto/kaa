@@ -18,18 +18,15 @@ def main():
 
     args = parser.parse_args()
 
-    runtime = Runtime()
-
     if args.expression:
-        runtime.eval_string(args.expression)
-
+        Runtime().eval_string(args.expression)
     elif args.paths:
+        runtime = Runtime()
         for path in args.paths:
             with open(path) as f:
                 runtime.eval_file(f)
     elif sys.stdin.isatty():
-        Repl(runtime).loop()
-
+        Repl().loop()
     else:
         runtime.eval_file(sys.stdin)
 

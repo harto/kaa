@@ -100,4 +100,6 @@
 (test (= "foo" (or "foo")))
 (test (= "bar" (or False "bar" (raise "should be unreachable"))))
 
+(test (not (= (gensym) (gensym))))
+
 (println " done")

@@ -1,23 +1,30 @@
 import re
 
 from kaa.core import first, is_list, rest, List, Symbol
+from kaa.parser import SPECIAL_FORMS
 from kaa.stream import CharStream, IterStream, StreamEmpty
 
 
 EOLIST = object()
+ATOM = re.compile(r'[^\s\(\)]+')
+INTEGER = re.compile(r'[+-]?[0-9]+')
+LITERALS = {
+    'True': True,
+    'False': False,
+    'None': None,
+}
 
 
 class Reader:
-    @classmethod
-    def read_file(cls, f):
-        return cls().read_all(IterStream(f, f.name))
-
-    @classmethod
-    def read_string(cls, s):
-        return cls().read_all(CharStream(s))
-
-    def __init__(self):
+    def __init__(self, ns):
+        self.ns = ns
         self.list_depth = 0
+
+    def read_file(self, f):
+        return self.read_all(IterStream(f, f.name))
+
+    def read_string(self, s):
+        return self.read_all(CharStream(s))
 
     def read_all(self, stream):
         while True:
@@ -57,10 +64,10 @@ class Reader:
             return EOLIST
         if c == '"':
             return _read_string(stream)
-        return _read_atom(c, stream)
+        return self._read_atom(c, stream)
 
     def _read_quote(self, stream):
-        return List([Symbol('quote', {'source': stream.source_meta()}),
+        return List([Symbol('quote', meta={'source': stream.source_meta()}),
                      self.read_next(stream)])
 
     def _read_quasiquote(self, stream):
@@ -69,10 +76,10 @@ class Reader:
     def _read_unquote(self, stream):
         if stream.peek_char() == '@':
             stream.pop_char()
-            return List([Symbol('unquote-splice', {'source': stream.source_meta()}),
+            return List([Symbol('unquote-splice', meta={'source': stream.source_meta()}),
                          self.read_next(stream)])
 
-        return List([Symbol('unquote', {'source': stream.source_meta()}),
+        return List([Symbol('unquote', meta={'source': stream.source_meta()}),
                      self.read_next(stream)])
 
     def _read_list(self, stream):
@@ -85,6 +92,30 @@ class Reader:
             l.append(form)
         self.list_depth -= 1
         return l
+
+    def _read_atom(self, first_char, stream):
+        meta = {'source': stream.source_meta()}
+        token = first_char
+        while ATOM.match(stream.peek_char() or ''):
+            token += stream.pop_char()
+
+        if INTEGER.match(token):
+            return int(token)
+
+        if token in LITERALS:
+            return LITERALS[token]
+
+        return self._read_symbol(token, meta)
+
+    def _read_symbol(self, s, meta):
+        if any(special_form.name == s for special_form in SPECIAL_FORMS):
+            return Symbol(s, None, meta)
+
+        if '/' in s and s != '/':
+            ns_name, sym_name = s.split('/', 1)
+        else:
+            ns_name, sym_name = None, s
+        return self.ns.resolve(Symbol(sym_name, ns_name, meta))
 
 
 def _read_string(stream):
@@ -126,24 +157,6 @@ class UnterminatedString(Exception):
     pass
 
 
-ATOM = re.compile(r'[^\s\(\)]+')
-INTEGER = re.compile(r'[+-]?[0-9]+')
-
-
-def _read_atom(first_char, stream):
-    meta = {'source': stream.source_meta()}
-    token = first_char
-    # TODO: is this weird? (regexp match against a single char)
-    while ATOM.match(stream.peek_char() or ''):
-        token += stream.pop_char()
-    if INTEGER.match(token):
-        return int(token)
-    if token.startswith('py/'):
-        # TODO: should this be evaled later?
-        return eval(token[3:]) # pylint: disable=eval-used
-    return Symbol(token, meta)
-
-
 class UnbalancedDelimiter(Exception):
     pass
 
@@ -165,13 +178,15 @@ def _process_quasiquote(obj):
     if first(obj) == Symbol('unquote'):
         return obj
     # `(a ~b ~@c) -> (concat (list 'a) (list b) c)
-    return List([Symbol('concat')] +
+    # TODO: could we invoke (concat) directly?
+    return List([Symbol('concat', ns='kaa.core')] +
                 [_process_quasiquote_list_item(o) for o in obj])
 
 
 def _process_quasiquote_list_item(obj):
+    # TODO: could we invoke (list) directly?
     if is_list(obj) and first(obj) == Symbol('unquote'):
-        return List([Symbol('list'), first(rest(obj))])
+        return List([Symbol('list', ns='kaa.core'), first(rest(obj))])
     if is_list(obj) and first(obj) == Symbol('unquote-splice'):
         return first(rest(obj))
-    return List([Symbol('list'), _process_quasiquote(obj)])
+    return List([Symbol('list', ns='kaa.core'), _process_quasiquote(obj)])

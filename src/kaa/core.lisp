@@ -1,3 +1,23 @@
+(import py/kaa.core as builtins)
+
+(def count py/len)
+(def * builtins/mul)
+(def + builtins/add)
+(def / builtins/div)
+(def = builtins/eql)
+(def concat builtins/concat)
+(def empty? builtins/empty)
+(def first builtins/first)
+(def list builtins/list_)
+(def list? builtins/is_list)
+(def not builtins/not_)
+(def print builtins/print_)
+(def println builtins/println)
+(def rest builtins/rest)
+(def str builtins/str_)
+(def symbol builtins/symbol)
+(def symbol? builtins/is_symbol)
+
 (defmacro and (&rest conds)
   (if conds
       `(if ~(first conds)

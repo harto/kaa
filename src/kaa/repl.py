@@ -1,6 +1,8 @@
 import traceback
 
-from kaa.core import serialize
+from kaa.core import serialize, Symbol
+from kaa.evaluator import Evaluator
+from kaa.ns import Namespace
 from kaa.reader import Reader, EOF
 from kaa.stream import CharStream
 
@@ -12,15 +14,16 @@ LAST_RESULT = '^'
 
 
 class Repl:
-    def __init__(self, runtime):
-        self.runtime = runtime
+    def __init__(self):
+        self.ns = Namespace('repl')
+        self.last_result_symbol = self.ns.resolve(Symbol('^'))
 
     def loop(self):
-        self._store_last_result(None)
+        self.ns[self.last_result_symbol] = None
         while True:
             try:
-                exprs = _read_exprs()
-                result = self.runtime.eval_all(exprs)
+                exprs = self.read_exprs()
+                result = Evaluator(self.ns).evaluate_all(exprs)
             except KeyboardInterrupt:
                 # Ctrl-C; user wants to abandon current input
                 print()
@@ -33,21 +36,18 @@ class Repl:
                 traceback.print_exc(1)
                 continue
             if result is not None:
-                self._store_last_result(result)
+                self.ns[self.last_result_symbol] = result
                 print(serialize(result))
 
-    def _store_last_result(self, value):
-        self.runtime.env.define_global(LAST_RESULT, value)
-
-
-# TODO: proper readline support, etc.
-def _read_exprs():
-    s = input(PROMPT_1)
-    while True:
-        line = CharStream(s)
-        try:
-            # eagerly evaluate the expression generator
-            # to flush out unexpected EOF
-            return list(Reader().read_all(line))
-        except EOF:
-            s += '\n' + input(PROMPT_2)
+    # TODO: proper readline support, etc.
+    # TODO: tab completion
+    def read_exprs(self):
+        s = input(PROMPT_1)
+        while True:
+            line = CharStream(s)
+            try:
+                # eagerly evaluate the expression generator
+                # to flush out unexpected EOF
+                return list(Reader(self.ns).read_all(line))
+            except EOF:
+                s += '\n' + input(PROMPT_2)

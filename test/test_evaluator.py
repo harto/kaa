@@ -1,14 +1,14 @@
 from pytest import fixture, raises
 
-from kaa.env import Environment
 from kaa.evaluator import Evaluator, UnboundSymbol, WrongArity
+from kaa.ns import Namespace
 from kaa.parser import Raise
 from testing_utils import read
 
 
 @fixture(name='evaluator')
 def evaluator_fixture():
-    return Evaluator(Environment())
+    return Evaluator(Namespace('test'))
 
 
 def test_lambda_invocation_wrong_arity(evaluator):
@@ -28,3 +28,7 @@ def test_raises(evaluator):
 def test_unbound_symbol_raises_error(evaluator):
     with raises(UnboundSymbol):
         evaluator.evaluate(read('foo'))
+
+
+def test_python_literal(evaluator):
+    assert evaluator.evaluate(read('py/Exception')) == Exception

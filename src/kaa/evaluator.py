@@ -1,12 +1,14 @@
 import sys
+from itertools import chain, repeat
 
-from kaa.core import is_list, is_symbol
+from kaa.core import is_list, is_symbol, List
 from kaa.parser import Lambda, Macro, parse
 
 
 class Evaluator:
-    def __init__(self, env):
-        self.env = env
+    def __init__(self, ns, env=None):
+        self.ns = ns
+        self.env = ns.defs if env is None else env
 
     def evaluate(self, expr):
         "Recursively parse and evaluate some s-expression."
@@ -14,7 +16,7 @@ class Evaluator:
 
         # Function invocation
         if is_list(expr) and expr:
-            return self.invoke(expr)
+            return self.call(expr)
 
         evaluator = getattr(self, f'eval__{type(expr).__name__}', None)
         if evaluator:
@@ -29,7 +31,7 @@ class Evaluator:
             result = self.evaluate(expr)
         return result
 
-    def invoke(self, expr):
+    def call(self, expr):
         f = self.evaluate(expr[0])
         unevaled_args = expr[1:]
 
@@ -51,18 +53,17 @@ class Evaluator:
         return self.with_bindings(bindings).evaluate_all(macro.body)
 
     def apply(self, fn, args):
-        lexical_bindings = fn.lexical_env.bindings if fn.lexical_env else {}
-        local_bindings = bind_params(fn.params, args)
-        bindings = dict(**lexical_bindings)
-        bindings.update(local_bindings)
-        return self.with_bindings(bindings).evaluate_all(fn.body)
+        bindings = {}
+        bindings.update(fn.lexical_env.bindings)
+        bindings.update(bind_params(fn.params, args))
+        return Evaluator(fn.ns, self.env.push_bindings(bindings)).evaluate_all(fn.body)
 
     def with_bindings(self, bindings):
-        return Evaluator(self.env.push(bindings))
+        return Evaluator(self.ns, self.env.push_bindings(bindings))
 
     def eval__Def(self, node):  # pylint: disable=invalid-name
         val = self.evaluate(node.value)
-        self.env.define_global(node.symbol.name, val)
+        self.ns[node.symbol] = val
         return val
 
     def eval__If(self, node):  # pylint: disable=invalid-name
@@ -70,10 +71,23 @@ class Evaluator:
             return self.evaluate(node.then)
         return self.evaluate(node.else_)
 
+    def eval__Import(self, node):  # pylint: disable=invalid-name
+        symbols = '*' if is_symbol(node.names) and node.names.name == '*' \
+            else tuple(sym.name for sym in node.names) if is_list(node.names) \
+            else ()
+        alias = node.alias.name if node.alias else None
+        if node.source.ns == 'py':
+            self.ns.import_module(self.ns.load_module(node.source.name), symbols, alias)
+        else:
+            self.ns.import_ns(self.ns.load_ns(node.source.name), symbols, alias)
+
     def eval__Lambda(self, node):  # pylint: disable=invalid-name
-        if node.lexical_env is None:
-            # could optimise this, e.g. don't capture if no free vars
-            return Lambda(node.params, node.body, self.env)
+        if not node.ns:
+            # The first time the lambda is taken as a value, capture:
+            # - its ns, in case of side-effects in body, e.g. `(def …)`
+            # - its lexical bindings
+            # TODO: could optimise this, e.g. only capture free vars
+            return Lambda(node.params, node.body, self.ns, self.env)
         return node
 
     def eval__Quote(self, node):  # pylint: disable=invalid-name, no-self-use
@@ -86,10 +100,14 @@ class Evaluator:
         raise ex
 
     def eval__Symbol(self, sym):  # pylint: disable=invalid-name
-        try:
-            return self.env[sym.name]
-        except KeyError:
-            raise UnboundSymbol(sym)
+        if sym.ns == 'py':
+            return eval(sym.name) # pylint: disable=eval-used
+        for env in (self.env, self.ns):
+            try:
+                return env[sym]
+            except KeyError:
+                pass
+        raise UnboundSymbol(sym)
 
     def eval__Try(self, node):  # pylint: disable=invalid-name
         try:

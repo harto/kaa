@@ -26,25 +26,32 @@ class List(list):
 
 
 class Symbol:
-    def __init__(self, name, meta=None):
+    def __init__(self, name, ns=None, meta=None):
+        assert isinstance(name, str)
+        assert ns is None or isinstance(ns, str)
         self.name = name
+        self.ns = ns
         self.meta = meta or {}
+
+    def in_ns(self, ns):
+        return Symbol(self.name, ns, self.meta)
 
     def __eq__(self, other):
         return isinstance(other, Symbol) \
-            and other.name == self.name
+            and other.name == self.name \
+            and other.ns == self.ns
 
     def __ne__(self, other):
         return not self == other
 
     def __hash__(self):
-        return hash(self.name)
+        return hash((self.name, self.ns))
 
     def __str__(self):
-        return self.name
+        return repr(self)
 
     def __repr__(self):
-        return self.name
+        return f'{self.ns}/{self.name}' if self.ns else self.name
 
 
 def concat(*lists):
@@ -106,6 +113,7 @@ def str_(*vals):
     return ''.join(map(str, vals))
 
 
+# TODO: does this need to know the current namespace?
 def symbol(name):
     return Symbol(str(name))
 
@@ -124,26 +132,3 @@ def mul(*xs):
 
 def div(*xs):
     return reduce(lambda acc, x: acc / x, xs, 1)
-
-
-def builtins():
-    return {'True': True,
-            'False': False,
-            'None': None,
-            '+': add,
-            '=': eql,
-            '*': mul,
-            '/': div,
-            'concat': concat,
-            'count': len,
-            'empty?': empty,
-            'first': first,
-            'list': list_,
-            'list?': is_list,
-            'not': not_,
-            'print': print_,
-            'println': println,
-            'rest': rest,
-            'str': str_,
-            'symbol': symbol,
-            'symbol?': is_symbol}

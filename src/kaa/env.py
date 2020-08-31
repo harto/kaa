@@ -15,11 +15,12 @@ class Environment:
                 return self.parent[k]
             raise
 
-    def define_global(self, name, val):
-        if self.parent:
-            self.parent.define_global(name, val)
-        else:
-            self.bindings[name] = val
+    def __setitem__(self, k, val):
+        assert self.parent is None, 'attempted to set value in non-root environment'
+        self.bindings[k] = val
 
-    def push(self, bindings=None):
+    def __iter__(self):
+        return iter(self.bindings)
+
+    def push_bindings(self, bindings=None):
         return Environment(bindings=bindings, parent=self)
