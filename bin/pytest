@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")"/..
+
+args=("$@")
+
+path_given=
+
+for arg in "${args[@]}"; do
+  if [[ $arg =~ ^[^-] ]]; then
+    path_given=1
+  fi
+done
+
+if [[ -z $path_given ]]; then
+  args+=(test)
+fi
+
+exec env PYTHONPATH=src:test pytest "${args[@]}"
