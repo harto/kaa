@@ -1,5 +1,15 @@
 (print "tests.lisp ")
 
+;; (import (expect expect-raises) from kaa.test)
+
+;; (assert expect)
+;; (assert expect-raises)
+
+;; (import kaa.test as t)
+;; (import .other as o)
+
+;; (expect-raises py/AssertionError (expect (= 1 2)))
+
 ;; (assert (= 5 (+ 2 2)))
 (defmacro test (expr)
   `(do
@@ -101,5 +111,11 @@
 (test (= "bar" (or False "bar" (raise "should be unreachable"))))
 
 (test (not (= (gensym) (gensym))))
+
+;; macroexpansion
+;; (defmacro m1 ()
+;;   )
+;; (defmacro m2 ()
+;;   )
 
 (println " done")

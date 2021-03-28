@@ -16,6 +16,10 @@ def main():
     parser.add_argument('-e', '--expression',
                         help='lisp expression to evaluate')
 
+    # parser.add_argument('-d', '--debug',
+    #                     help='interpreter debug mode',
+    #                     action='store_true')
+
     args = parser.parse_args()
 
     if args.expression:

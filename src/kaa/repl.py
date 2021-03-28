@@ -1,6 +1,7 @@
+import pdb
 import traceback
 
-from kaa.core import serialize, Symbol
+from kaa.core import is_list, serialize, Symbol
 from kaa.evaluator import Evaluator
 from kaa.ns import Namespace
 from kaa.reader import Reader, EOF
@@ -23,6 +24,10 @@ class Repl:
         while True:
             try:
                 exprs = self.read_exprs()
+                if exprs and exprs[0] and is_list(exprs[0]) and \
+                   exprs[0][0] == Symbol('debug', '__kaa__'):
+                    exprs = exprs[0][1:]
+                    pdb.set_trace()
                 result = Evaluator(self.ns).evaluate_all(exprs)
             except KeyboardInterrupt:
                 # Ctrl-C; user wants to abandon current input
@@ -33,7 +38,7 @@ class Repl:
                 print()
                 break
             except Exception:  # pylint: disable=broad-except
-                traceback.print_exc(1)
+                traceback.print_exc()
                 continue
             if result is not None:
                 self.ns[self.last_result_symbol] = result

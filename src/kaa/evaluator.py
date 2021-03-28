@@ -151,18 +151,16 @@ def check_arity(params, args):
     else:
         expected = f'between {min_arity} and {max_arity}'
 
-    # TODO: raise TypeError, like Python?
     raise WrongArity(f'expected {expected} args, got {num_args}')
 
 
+# TODO: should this be TypeError, like Python?
 class WrongArity(Exception):
     pass
 
 
+# TODO: should this be NameError, like Python?
 class UnboundSymbol(Exception):
     def __init__(self, sym):
-        try:
-            msg = '%s at %s' % (sym.name, sym.meta['source'])
-        except KeyError:
-            msg = sym.name
+        msg = f'{sym} at {sym.meta["source"]}' if 'source' in sym.meta else str(sym)
         super().__init__(msg)
